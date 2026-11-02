@@ -83,7 +83,9 @@ function render(){
     ${S.editor ? studioHtml() : ""}
     ${statusHtml}
     <section class="card" aria-labelledby="h-route"><h2 id="h-route">${PLURAL ? "Where are we now?" : "Where am I now?"}</h2>
-      <ol class="route">${STOPS.map((s,i) => `<li class="${i < si ? "done" : i === si ? "now" : ""}"><span class="pin" aria-hidden="true"></span><div><div class="nm">${esc(s.nm)}${i === si ? '<span class="tag">We are here</span>' : ""}${s.tag && i !== si ? `<span class="tag">${esc(s.tag)}</span>` : ""}</div><div class="ds">${esc(s.ds)}</div></div><span class="dt">${s.dt}</span></li>`).join("")}</ol>
+      ${window.routeMapSvg ? `<div class="rmwrap">${window.routeMapSvg(si >= 0 ? STOPS[si].key : "", STOPS.slice(0, Math.max(si,0)).map(s => s.key))}</div>` : ""}
+      ${T.roadTrip ? `<p class="small muted" style="margin:4px 0 10px">🚗 Road trip: ≈ ${esc(T.roadTrip.km)} km · ${esc(T.roadTrip.note || "")}</p>` : ""}
+      <ol class="route">${STOPS.map((s,i) => `<li class="${i < si ? "done" : i === si ? "now" : ""}"><span class="pin" aria-hidden="true"></span><div><div class="nm">${esc(s.nm)}${i === si ? '<span class="tag">We are here</span>' : ""}${s.tag && i !== si ? `<span class="tag">${esc(s.tag)}</span>` : ""}</div><div class="ds">${esc(s.ds)}</div>${legHtml(s.leg)}</div><span class="dt">${s.dt}</span></li>`).join("")}</ol>
       ${T.noSignalNote ? `<p class="small muted" style="margin:4px 0 0">${esc(T.noSignalNote)}</p>` : ""}
     </section>
     <section aria-labelledby="h-feed" style="display:grid;gap:16px"><h2 id="h-feed">News from the road</h2>
@@ -102,6 +104,13 @@ function render(){
   </footer>`;
   bind();
 }
+const LEGICON = { car:"🚗", ferry:"⛴️", train:"🚄", plane:"✈️" };
+function legHtml(l){
+  if(!l) return "";
+  const bits = [l.km ? "≈ " + l.km + " km" : "", l.time || "", l.text || ""].filter(Boolean).map(esc).join(" · ");
+  return bits ? `<div class="leg"><span aria-hidden="true">${LEGICON[l.mode] || "•"}</span> ${bits}</div>` : "";
+}
+window.legHtml = legHtml;
 function pwFormHtml(){
   return `<details class="card" style="margin-top:12px"><summary><b>Change password</b> <span class="small muted">· pick your own, at least 10 characters</span></summary>
     <form class="login" id="pwForm" style="margin-top:10px"><input type="password" id="pwNew" minlength="10" required autocomplete="new-password" placeholder="New password, min. 10 characters"><button class="btn" type="submit">Save</button><div class="msg" id="pwMsg" aria-live="polite"></div></form></details>`;

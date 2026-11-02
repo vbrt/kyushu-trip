@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&amp;family=Source+Sans+3:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 <style>
 :root{
   /* Layout: Kopf mit Countdown, Tab-Leiste wie Wegweiser, darunter je Bereich Karten in einer Spalte (max 860px) */
@@ -302,6 +302,7 @@ footer{padding:20px 0 40px;font-size:.8rem;color:var(--muted)}
     <div class="sechead">
       <h2>Itinerary</h2>
     </div>
+    <div id="routeOverview" style="margin-bottom:12px"></div>
     <div id="days" style="display:grid;gap:12px"></div>
   </section>
 
@@ -326,11 +327,12 @@ footer{padding:20px 0 40px;font-size:.8rem;color:var(--muted)}
 <footer class="wrap">All times are local time.</footer>
 
 <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Photo"><button type="button" id="lbClose">Close</button><img id="lbImg" alt=""></div>
-<script src="cockpit-flags.js?v=3"></script>
+<script src="cockpit-flags.js?v=4"></script>
 <script src="vendor/supabase.js?v=2.45.4"></script>
-<script src="config.js?v=3"></script>
-<script src="trip.js?v=3"></script>
-<script src="app.js?v=3"></script>
-<script src="cockpit.js?v=3"></script>
+<script src="config.js?v=4"></script>
+<script src="trip.js?v=4"></script>
+<script src="route-map.js?v=4"></script>
+<script src="app.js?v=4"></script>
+<script src="cockpit.js?v=4"></script>
 </body>
 </html>

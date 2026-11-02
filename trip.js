@@ -32,21 +32,22 @@ window.TRIP = {
   currencies: ["EUR", "JPY"],
   costCategories: ["Flights", "Accommodation", "Car & fuel", "Trains & ferries", "Food & drink", "Onsen & sights", "Other"],
 
-  // "to" = last night in this place
+  // "to" = last night in this place. "leg" = how you get here from the previous stop (approximate)
   stops: [
-    { nm: "Getting there", ds: "Flight to Japan", from: "2026-12-27", to: "2026-12-27", dt: "27 Dec" },
-    { nm: "Osaka", ds: "Reunion and street food in Dōtonbori", from: "2026-12-28", to: "2026-12-29", dt: "28–30 Dec", key: "osa" },
-    { nm: "Fukuoka", ds: "Yatai, ramen and New Year's Eve", from: "2026-12-30", to: "2026-12-31", dt: "30 Dec – 1 Jan", key: "fuk" },
-    { nm: "Beppu", ds: "Road trip starts: the onsen town", from: "2027-01-01", to: "2027-01-02", dt: "1–3 Jan", key: "bep" },
-    { nm: "Miyazaki", ds: "The sunny east coast", from: "2027-01-03", to: "2027-01-03", dt: "3–4 Jan", key: "miy" },
-    { nm: "Kirishima", ds: "Volcanoes and shrines", from: "2027-01-04", to: "2027-01-05", dt: "4–6 Jan", key: "kir" },
-    { nm: "Kumamoto", ds: "Castle town", from: "2027-01-06", to: "2027-01-07", dt: "6–8 Jan", key: "kum" },
-    { nm: "Unzen", ds: "Onsen with a sea view", from: "2027-01-08", to: "2027-01-08", dt: "8–9 Jan", key: "unz" },
-    { nm: "Nagasaki", ds: "Chinatown and night views", from: "2027-01-09", to: "2027-01-10", dt: "9–11 Jan", key: "nag" },
-    { nm: "Ureshino", ds: "Green tea and onsen tofu", from: "2027-01-11", to: "2027-01-12", dt: "11–13 Jan", key: "ure" },
-    { nm: "Osaka", ds: "Last days in the city", from: "2027-01-13", to: "2027-01-15", dt: "13–16 Jan", key: "osa" },
-    { nm: "Home", ds: "Flight home", from: "2027-01-16", to: "2099-12-31", dt: "16 Jan" }
+    { nm: "Getting there", ds: "Flight to Japan", from: "2026-12-27", to: "2026-12-27", dt: "27 Dec", leg: { mode: "plane", text: "Everyone flies in separately" } },
+    { nm: "Osaka", ds: "Reunion and street food in Dōtonbori", from: "2026-12-28", to: "2026-12-29", dt: "28–30 Dec", key: "osa", leg: { mode: "plane", text: "Arrival in Osaka" } },
+    { nm: "Fukuoka", ds: "Yatai, ramen and New Year's Eve", from: "2026-12-30", to: "2026-12-31", dt: "30 Dec – 1 Jan", key: "fuk", leg: { mode: "train", km: 620, text: "Sara: Shinkansen ≈ 2½ h · Ugo & Theo: overnight ferry" } },
+    { nm: "Beppu", ds: "Road trip starts: the onsen town", from: "2027-01-01", to: "2027-01-02", dt: "1–3 Jan", key: "bep", leg: { mode: "car", km: 145, time: "1 h 50 min", text: "Pick up the car in Fukuoka" } },
+    { nm: "Miyazaki", ds: "The sunny east coast", from: "2027-01-03", to: "2027-01-03", dt: "3–4 Jan", key: "miy", leg: { mode: "car", km: 170, time: "2 h 30 min", text: "Along the east coast to Saito" } },
+    { nm: "Kirishima", ds: "Volcanoes and shrines", from: "2027-01-04", to: "2027-01-05", dt: "4–6 Jan", key: "kir", leg: { mode: "car", km: 100, time: "1 h 30 min" } },
+    { nm: "Kumamoto", ds: "Castle town", from: "2027-01-06", to: "2027-01-07", dt: "6–8 Jan", key: "kum", leg: { mode: "car", km: 150, time: "2 h" } },
+    { nm: "Unzen", ds: "Onsen with a sea view", from: "2027-01-08", to: "2027-01-08", dt: "8–9 Jan", key: "unz", leg: { mode: "ferry", km: 45, time: "≈ 2 h", text: "Car ferry Kumamoto → Shimabara (30 min), then up to Unzen" } },
+    { nm: "Nagasaki", ds: "Chinatown and night views", from: "2027-01-09", to: "2027-01-10", dt: "9–11 Jan", key: "nag", leg: { mode: "car", km: 60, time: "1 h 20 min" } },
+    { nm: "Ureshino", ds: "Green tea and onsen tofu", from: "2027-01-11", to: "2027-01-12", dt: "11–13 Jan", key: "ure", leg: { mode: "car", km: 65, time: "1 h" } },
+    { nm: "Osaka", ds: "Last days in the city", from: "2027-01-13", to: "2027-01-15", dt: "13–16 Jan", key: "osa", leg: { mode: "train", text: "Sara: train via Takeo-Onsen & Hakata ≈ 4 h · Ugo & Theo: drop the car in Fukuoka (95 km), follow on 14 Jan" } },
+    { nm: "Home", ds: "Flight home", from: "2027-01-16", to: "2099-12-31", dt: "16 Jan", leg: { mode: "plane", text: "Flights home" } }
   ],
+  roadTrip: { km: 830, note: "Fukuoka → Fukuoka by rental car, 1–13 Jan" },
   places: ["On the road", "Osaka", "Fukuoka", "Beppu", "Miyazaki", "Kirishima", "Kumamoto", "Unzen", "Nagasaki", "Ureshino", "Home"],
   statuses: ["", "All good, having a great time", "Tired but happy", "Soaking in an onsen", "Full and happy", "No signal for a few hours"],
   reactions: ["❤️", "👏", "😂", "😮", "🍜"],
