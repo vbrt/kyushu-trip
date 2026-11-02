@@ -389,7 +389,9 @@ function demoData(){
   document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") processOutbox(); });
   if("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
   loadWeather().then(render);
-  if(sb) sb.auth.onAuthStateChange(async (ev) => { if(ev === "SIGNED_IN" || ev === "SIGNED_OUT"){ await checkEditor(); render(); processOutbox(); } });
+  // Never await Supabase calls inside this callback: supabase-js holds its auth lock while it runs, and a nested call deadlocks
+  // every later request (uploads hang forever). Defer the work instead.
+  if(sb) sb.auth.onAuthStateChange((ev) => { if(ev === "SIGNED_IN" || ev === "SIGNED_OUT"){ setTimeout(async () => { const was = S.editor; await checkEditor(); if(was !== S.editor || ev === "SIGNED_OUT") render(); processOutbox(); }, 0); } });
   setInterval(async () => { if(document.visibilityState !== "visible") return; const a = document.activeElement; if(a && a.matches("input,textarea,select")) return; if(pending.length || ($("pText") && $("pText").value)) return; await loadAll(); render(); }, 90000);
 })();
 })();

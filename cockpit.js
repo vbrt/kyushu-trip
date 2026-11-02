@@ -442,10 +442,11 @@ function bindUploads(root){
       if(st) st.textContent = `Uploading ${i+1} of ${files.length} …`;
       try{
         const type = f.type || (f.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "");
-        const r = await state.assets.upload(f, type ? {type} : undefined);
+        const r = await Promise.race([state.assets.upload(f, type ? {type} : undefined), new Promise((_, rej) => setTimeout(() => rej({code:"timeout"}), Math.max(60000, f.size / 15)))]);
         done.push({id: r.id, name: f.name.slice(0,120), type: r.contentType});
       }catch(e){
-        const msg = {too_large:"File too large (max. 20 MB)",unsupported_type:"Images or PDF only",rate_limited:"Too many uploads, wait a moment",quota_or_state:"Storage full"}[e?.code] || "Upload failed";
+        console.warn(e);
+        const msg = {too_large:"File too large (max. 20 MB)",unsupported_type:"Images or PDF only",rate_limited:"Too many uploads, wait a moment",quota_or_state:"Storage full",forbidden:"No permission to upload (log out and in again)",timeout:"Upload took too long. Check the connection and try again"}[e?.code] || ("Upload failed" + (e && e.message ? ": " + e.message : ""));
         if(st) st.textContent = msg; inp.value = ""; return;
       }
     }
@@ -542,7 +543,7 @@ const assetsAdapter = {
     const type = (opt && opt.type) || file.type || "application/octet-stream";
     const path = `belege/${uid()}-${(file.name || "datei").replace(/[^a-zA-Z0-9._-]/g,"_").slice(0,60)}`;
     const { error } = await SBC.storage.from("private").upload(path, file, { contentType: type, upsert: false });
-    if(error) throw { code: /size/i.test(error.message||"") ? "too_large" : "upstream_error", message: error.message };
+    if(error){ const m = error.message || ""; throw { code: /size|too large|exceed/i.test(m) ? "too_large" : /mime|type/i.test(m) ? "unsupported_type" : /security|policy|unauthor|forbidden|403/i.test(m) ? "forbidden" : "upstream_error", message: m }; }
     await signPaths([path]);
     return { id: path, url: signed[path], contentType: type };
   }
