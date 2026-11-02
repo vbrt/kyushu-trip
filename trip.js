@@ -32,20 +32,20 @@ window.TRIP = {
   currencies: ["EUR", "JPY"],
   costCategories: ["Flights", "Accommodation", "Car & fuel", "Trains & ferries", "Food & drink", "Onsen & sights", "Other"],
 
-  // "to" = last night in this place. "leg" = how you get here from the previous stop (approximate)
+  // "to" = last night in this place. "legs" = how you get here (approximate; min = minutes for the bar)
   stops: [
-    { nm: "Getting there", ds: "Flight to Japan", from: "2026-12-27", to: "2026-12-27", dt: "27 Dec", leg: { mode: "plane", text: "Everyone flies in separately" } },
-    { nm: "Osaka", ds: "Reunion and street food in Dōtonbori", from: "2026-12-28", to: "2026-12-29", dt: "28–30 Dec", key: "osa", leg: { mode: "plane", text: "Arrival in Osaka" } },
-    { nm: "Fukuoka", ds: "Yatai, ramen and New Year's Eve", from: "2026-12-30", to: "2026-12-31", dt: "30 Dec – 1 Jan", key: "fuk", leg: { mode: "train", km: 620, text: "Sara: Shinkansen ≈ 2½ h · Ugo & Theo: overnight ferry" } },
-    { nm: "Beppu", ds: "Road trip starts: the onsen town", from: "2027-01-01", to: "2027-01-02", dt: "1–3 Jan", key: "bep", leg: { mode: "car", km: 145, time: "1 h 50 min", text: "Pick up the car in Fukuoka" } },
-    { nm: "Miyazaki", ds: "The sunny east coast", from: "2027-01-03", to: "2027-01-03", dt: "3–4 Jan", key: "miy", leg: { mode: "car", km: 170, time: "2 h 30 min", text: "Along the east coast to Saito" } },
-    { nm: "Kirishima", ds: "Volcanoes and shrines", from: "2027-01-04", to: "2027-01-05", dt: "4–6 Jan", key: "kir", leg: { mode: "car", km: 100, time: "1 h 30 min" } },
-    { nm: "Kumamoto", ds: "Castle town", from: "2027-01-06", to: "2027-01-07", dt: "6–8 Jan", key: "kum", leg: { mode: "car", km: 150, time: "2 h" } },
-    { nm: "Unzen", ds: "Onsen with a sea view", from: "2027-01-08", to: "2027-01-08", dt: "8–9 Jan", key: "unz", leg: { mode: "ferry", km: 45, time: "≈ 2 h", text: "Car ferry Kumamoto → Shimabara (30 min), then up to Unzen" } },
-    { nm: "Nagasaki", ds: "Chinatown and night views", from: "2027-01-09", to: "2027-01-10", dt: "9–11 Jan", key: "nag", leg: { mode: "car", km: 60, time: "1 h 20 min" } },
-    { nm: "Ureshino", ds: "Green tea and onsen tofu", from: "2027-01-11", to: "2027-01-12", dt: "11–13 Jan", key: "ure", leg: { mode: "car", km: 65, time: "1 h" } },
-    { nm: "Osaka", ds: "Last days in the city", from: "2027-01-13", to: "2027-01-15", dt: "13–16 Jan", key: "osa", leg: { mode: "train", text: "Sara: train via Takeo-Onsen & Hakata ≈ 4 h · Ugo & Theo: drop the car in Fukuoka (95 km), follow on 14 Jan" } },
-    { nm: "Home", ds: "Flight home", from: "2027-01-16", to: "2099-12-31", dt: "16 Jan", leg: { mode: "plane", text: "Flights home" } }
+    { nm: "Getting there", ds: "Flight to Japan", from: "2026-12-27", to: "2026-12-27", dt: "27 Dec", legs: [{ mode: "plane", from: "Home", to: "Osaka", text: "Everyone flies in separately" }] },
+    { nm: "Osaka", ds: "Reunion and street food in Dōtonbori", from: "2026-12-28", to: "2026-12-29", dt: "28–30 Dec", key: "osa", legs: [] },
+    { nm: "Fukuoka", ds: "Yatai, ramen and New Year's Eve", from: "2026-12-30", to: "2026-12-31", dt: "30 Dec – 1 Jan", key: "fuk", legs: [{ mode: "train", from: "Osaka", to: "Fukuoka", min: 150, km: 620, who: "Sara", text: "Shinkansen" }, { mode: "ferry", from: "Osaka", to: "Kyushu", who: "Ugo & Theo", text: "Overnight ferry" }] },
+    { nm: "Beppu", ds: "Road trip starts: the onsen town", from: "2027-01-01", to: "2027-01-02", dt: "1–3 Jan", key: "bep", legs: [{ mode: "car", from: "Fukuoka", to: "Beppu", min: 110, km: 145, text: "Pick up the rental car first" }] },
+    { nm: "Miyazaki", ds: "The sunny east coast", from: "2027-01-03", to: "2027-01-03", dt: "3–4 Jan", key: "miy", legs: [{ mode: "car", from: "Beppu", to: "Saito", min: 150, km: 170, text: "Along the east coast" }] },
+    { nm: "Kirishima", ds: "Volcanoes and shrines", from: "2027-01-04", to: "2027-01-05", dt: "4–6 Jan", key: "kir", legs: [{ mode: "car", from: "Saito", to: "Kirishima", min: 90, km: 100 }] },
+    { nm: "Kumamoto", ds: "Castle town", from: "2027-01-06", to: "2027-01-07", dt: "6–8 Jan", key: "kum", legs: [{ mode: "car", from: "Kirishima", to: "Kumamoto", min: 120, km: 150 }] },
+    { nm: "Unzen", ds: "Onsen with a sea view", from: "2027-01-08", to: "2027-01-08", dt: "8–9 Jan", key: "unz", legs: [{ mode: "ferry", from: "Kumamoto", to: "Unzen", min: 120, km: 45, text: "Incl. 30 min car ferry to Shimabara" }] },
+    { nm: "Nagasaki", ds: "Chinatown and night views", from: "2027-01-09", to: "2027-01-10", dt: "9–11 Jan", key: "nag", legs: [{ mode: "car", from: "Unzen", to: "Nagasaki", min: 80, km: 60 }] },
+    { nm: "Ureshino", ds: "Green tea and onsen tofu", from: "2027-01-11", to: "2027-01-12", dt: "11–13 Jan", key: "ure", legs: [{ mode: "car", from: "Nagasaki", to: "Ureshino", min: 60, km: 65 }] },
+    { nm: "Osaka", ds: "Last days in the city", from: "2027-01-13", to: "2027-01-15", dt: "13–16 Jan", key: "osa", legs: [{ mode: "car", from: "Ureshino", to: "Fukuoka", min: 80, km: 95, who: "All three", text: "Return the rental car" }, { mode: "train", from: "Fukuoka", to: "Osaka", min: 150, km: 620, who: "Sara", text: "Shinkansen · Ugo & Theo follow on 14 Jan" }] },
+    { nm: "Home", ds: "Flight home", from: "2027-01-16", to: "2099-12-31", dt: "16 Jan", legs: [{ mode: "plane", from: "Osaka", to: "Home", text: "Flights home" }] }
   ],
   roadTrip: { km: 830, note: "Fukuoka → Fukuoka by rental car, 1–13 Jan" },
   places: ["On the road", "Osaka", "Fukuoka", "Beppu", "Miyazaki", "Kirishima", "Kumamoto", "Unzen", "Nagasaki", "Ureshino", "Home"],

@@ -172,7 +172,19 @@ input,select,textarea{font-size:16px}
 .rm-legend i{display:inline-block;width:18px;height:0;vertical-align:middle;margin-right:5px;border-top:3px solid var(--trail)}
 .rm-legend i.ferry{border-top:3px dashed var(--accent)}
 .rm-legend i.train{border-top:3px dotted var(--accent)}
-.leg{font-size:.82rem;color:var(--muted);margin-top:2px}
+.leg{display:grid;grid-template-columns:30px 1fr;gap:8px;align-items:start;margin:8px 0 2px;padding:8px 10px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
+.leg-ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface);font-size:1rem;border:1px solid var(--line)}
+.leg-t{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 10px;align-items:baseline;font-size:.92rem}
+.leg-t b{font-weight:700}
+.leg-m{font-weight:700;color:var(--trail);font-variant-numeric:tabular-nums;white-space:nowrap}
+.leg-bar{height:5px;border-radius:3px;background:color-mix(in srgb,var(--trail) 14%,transparent);margin:5px 0 2px;overflow:hidden}
+.leg-bar i{display:block;height:100%;border-radius:3px;background:var(--trail)}
+.leg-ferry .leg-bar i,.leg-train .leg-bar i{background:var(--accent)}
+.leg-ferry .leg-m,.leg-train .leg-m{color:var(--accent)}
+.leg-n{font-size:.8rem;color:var(--muted)}
 ol.legs{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
 @media (prefers-reduced-motion:no-preference){.rm-stop .rm-halo{animation:rmpulse 2s ease-in-out infinite}}
 @keyframes rmpulse{50%{opacity:.35}}
+.route li{grid-template-columns:22px 1fr 7.6em}
+.route .dt{text-align:right}
+.route .leg{margin-right:calc(-7.6em - 12px)}

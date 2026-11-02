@@ -85,7 +85,7 @@ function render(){
     <section class="card" aria-labelledby="h-route"><h2 id="h-route">${PLURAL ? "Where are we now?" : "Where am I now?"}</h2>
       ${window.routeMapSvg ? `<div class="rmwrap">${window.routeMapSvg(si >= 0 ? STOPS[si].key : "", STOPS.slice(0, Math.max(si,0)).map(s => s.key))}</div>` : ""}
       ${T.roadTrip ? `<p class="small muted" style="margin:4px 0 10px">🚗 Road trip: ≈ ${esc(T.roadTrip.km)} km · ${esc(T.roadTrip.note || "")}</p>` : ""}
-      <ol class="route">${STOPS.map((s,i) => `<li class="${i < si ? "done" : i === si ? "now" : ""}"><span class="pin" aria-hidden="true"></span><div><div class="nm">${esc(s.nm)}${i === si ? '<span class="tag">We are here</span>' : ""}${s.tag && i !== si ? `<span class="tag">${esc(s.tag)}</span>` : ""}</div><div class="ds">${esc(s.ds)}</div>${legHtml(s.leg)}</div><span class="dt">${s.dt}</span></li>`).join("")}</ol>
+      <ol class="route">${STOPS.map((s,i) => `<li class="${i < si ? "done" : i === si ? "now" : ""}"><span class="pin" aria-hidden="true"></span><div><div class="nm">${esc(s.nm)}${i === si ? '<span class="tag">We are here</span>' : ""}${s.tag && i !== si ? `<span class="tag">${esc(s.tag)}</span>` : ""}</div><div class="ds">${esc(s.ds)}</div>${legHtml(s.legs)}</div><span class="dt">${s.dt}</span></li>`).join("")}</ol>
       ${T.noSignalNote ? `<p class="small muted" style="margin:4px 0 0">${esc(T.noSignalNote)}</p>` : ""}
     </section>
     <section aria-labelledby="h-feed" style="display:grid;gap:16px"><h2 id="h-feed">News from the road</h2>
@@ -105,10 +105,17 @@ function render(){
   bind();
 }
 const LEGICON = { car:"🚗", ferry:"⛴️", train:"🚄", plane:"✈️" };
-function legHtml(l){
-  if(!l) return "";
-  const bits = [l.km ? "≈ " + l.km + " km" : "", l.time || "", l.text || ""].filter(Boolean).map(esc).join(" · ");
-  return bits ? `<div class="leg"><span aria-hidden="true">${LEGICON[l.mode] || "•"}</span> ${bits}</div>` : "";
+const fmtMin = m => m >= 60 ? Math.floor(m/60) + " h" + (m % 60 ? " " + (m % 60) + " min" : "") : m + " min";
+function legHtml(legs){
+  const L = Array.isArray(legs) ? legs : legs ? [legs] : [];
+  return L.map(l => {
+    const meta = [l.min ? "≈ " + fmtMin(l.min) : "", l.km ? "≈ " + l.km + " km" : ""].filter(Boolean).join(" · ");
+    const pct = l.min ? Math.max(8, Math.round(l.min / 150 * 100)) : 0;
+    return `<div class="leg leg-${esc(l.mode)}"><span class="leg-ic" aria-hidden="true">${LEGICON[l.mode] || "•"}</span>
+      <div class="leg-b"><div class="leg-t"><b>${esc(l.from || "")} → ${esc(l.to || "")}</b>${meta ? `<span class="leg-m">${esc(meta)}</span>` : ""}</div>
+      ${pct ? `<div class="leg-bar"><i style="width:${Math.min(100,pct)}%"></i></div>` : ""}
+      ${l.who || l.text ? `<div class="leg-n">${l.who ? `<b>${esc(l.who)}:</b> ` : ""}${esc(l.text || "")}</div>` : ""}</div></div>`;
+  }).join("");
 }
 window.legHtml = legHtml;
 function pwFormHtml(){

@@ -141,7 +141,7 @@ function renderPlan(){
   const rm = $("#routeOverview");
   if(rm && window.routeMapSvg) rm.innerHTML = `<div class="card"><div class="sechead"><h3>Route</h3>${T.roadTrip ? `<span class="small muted">🚗 ≈ ${esc(T.roadTrip.km)} km road trip</span>` : ""}</div>
     <div class="rmwrap">${window.routeMapSvg(si >= 0 ? S[si].key : "", S.slice(0, Math.max(si,0)).map(s => s.key))}</div>
-    <ol class="legs">${S.filter(s => s.leg).map(s => `<li><b>${esc(s.nm)}</b> <span class="small muted">${esc(s.dt)}</span>${window.legHtml ? window.legHtml(s.leg) : ""}</li>`).join("")}</ol></div>`;
+    <h3 style="margin:14px 0 4px">Getting from A to B</h3><ol class="legs">${S.filter(s => (s.legs||[]).length).map(s => `<li><span class="small muted">${esc(s.dt)}</span>${window.legHtml ? window.legHtml(s.legs) : ""}</li>`).join("")}</ol></div>`;
   $("#days").innerHTML = DAYS.length ? DAYS.map(d => dayCard(d,false)).join("") : '<p class="muted">No itinerary yet.</p>';
 }
 
