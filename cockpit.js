@@ -586,9 +586,12 @@ function showGate(msg, email){
   const out = $("#cOut"); if(out) out.addEventListener("click", async () => { await SBC.auth.signOut(); location.reload(); });
   const f = $("#cLogin"); if(f) f.addEventListener("submit", async e => { e.preventDefault();
     const email = $("#cEmail").value.trim(), pw = $("#cPw").value;
-    if(pw){ const { error } = await SBC.auth.signInWithPassword({ email, password: pw }); if(error){ $("#cMsg").textContent = "Wrong email or password."; } else location.reload(); return; }
+    $("#cMsg").textContent = "Logging in …";
+    try{
+    if(pw){ const { error } = await SBC.auth.signInWithPassword({ email, password: pw }); if(error){ console.warn(error); $("#cMsg").textContent = /invalid/i.test(error.message||"") ? "Wrong email or password." : "Login failed: " + error.message; } else location.reload(); return; }
     const { error } = await SBC.auth.signInWithOtp({ email, options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname } });
-    if(error) console.warn(error); $("#cMsg").textContent = error ? (window.loginErrorText ? window.loginErrorText(error) : error.message) : "Link sent. Open the email on this device and tap it."; });
+    if(error) console.warn(error); $("#cMsg").textContent = error ? (window.loginErrorText ? window.loginErrorText(error) : error.message) : "Link sent. Open the email on this device and tap it.";
+    }catch(err){ console.error(err); $("#cMsg").textContent = "Login failed: " + (err && err.message || err); } });
 }
 
 let renderQueued = false;

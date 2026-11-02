@@ -21,9 +21,9 @@ window.TRIP = {
   noSignalNote: "",
 
   people: [
-    { key: "sara", name: "Sara", img: "img/p-sara.jpg", nick: "The Photographer", bio: "Design lover, matcha devotee and photographer with 1,000 photos a day. Happiest wandering back alleys and tiny boutiques. If the room is great, Sara booked it." },
-    { key: "ugo",  name: "Ugo",  img: "img/p-ugo.jpg",  nick: "Player One", bio: "Sara's best friend and Japan-obsessed. Spends more hours on his Nintendo Switch than at work." },
-    { key: "theo", name: "Theo", img: "img/p-theo.jpg", nick: "Croissant Hunter", bio: "Ugo's brother, just as Japan-obsessed, and on a mission to find the best croissant in Kyushu." }
+    { key: "sara", name: "Sara", img: "img/p-sara.jpg", nick: "The Photographer", bio: "Takes 1,000 photos before breakfast and inspects every hotel like a Michelin judge. Will happily walk 40 minutes for the perfect matcha or a tiny shop without a sign." },
+    { key: "ugo",  name: "Ugo",  img: "img/p-ugo.jpg",  nick: "Player One", bio: "Sara's best friend. Has clocked more hours on his Nintendo Switch than at his actual job and treats Japan as the final level. May need to be dragged out of every arcade." },
+    { key: "theo", name: "Theo", img: "img/p-theo.jpg", nick: "Croissant Hunter", bio: "Ugo's brother and just as Japan-obsessed. Flew 9,000 km to the land of ramen and sushi to find… the perfect croissant. Kyushu's bakeries have been warned." }
   ],
 
   features: { blog: true, costs: true, wishes: true },

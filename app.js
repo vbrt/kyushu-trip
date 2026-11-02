@@ -300,9 +300,12 @@ function bind(){
   if(lf) lf.addEventListener("submit", async e => { e.preventDefault(); const m = $("loginMsg");
     if(DEMO){ m.textContent = "No login in preview mode."; return; }
     const email = $("loginEmail").value.trim(), pw = $("loginPw").value;
-    if(pw){ const { error } = await sb.auth.signInWithPassword({ email, password: pw }); m.textContent = error ? "Wrong email or password." : "Logged in."; if(!error){ await checkEditor(); render(); } return; }
+    m.textContent = "Logging in …";
+    try{
+    if(pw){ const { error } = await sb.auth.signInWithPassword({ email, password: pw }); if(error) console.warn(error); m.textContent = error ? (/invalid/i.test(error.message||"") ? "Wrong email or password." : "Login failed: " + error.message) : "Logged in."; if(!error){ await checkEditor(); render(); } return; }
     const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser:false, emailRedirectTo: location.origin + location.pathname } });
-    if(error) console.warn(error); m.textContent = error ? loginErrorText(error) : "Link sent. Open the email and tap it on your phone."; });
+    if(error) console.warn(error); m.textContent = error ? loginErrorText(error) : "Link sent. Open the email and tap it on your phone.";
+    }catch(err){ console.error(err); m.textContent = "Login failed: " + (err && err.message || err); } });
   const pf = $("pwForm"); if(pf) pf.addEventListener("submit", async e => { e.preventDefault(); const m = $("pwMsg");
     if(DEMO){ m.textContent = "Not available in preview mode."; return; }
     const { error } = await sb.auth.updateUser({ password: $("pwNew").value }); m.textContent = error ? "That didn't work: " + error.message : "Saved. From now on, log in with email and your new password."; if(!error) $("pwNew").value = ""; });
