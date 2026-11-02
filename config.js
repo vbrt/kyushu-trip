@@ -1,7 +1,6 @@
-// Supabase-Verbindung dieser Reise (NEUES Supabase-Projekt pro Reise!).
-// Der anon-Key ist öffentlich und darf hier stehen; die Rechte regelt die Datenbank.
+// Supabase-Verbindung dieser Reise. Der anon-Key ist öffentlich; die Rechte regelt die Datenbank.
 window.APP_CONFIG = {
-  supabaseUrl: "",       // z. B. "https://abcd1234.supabase.co"
-  supabaseAnonKey: "",   // Project Settings > API > anon public
-  siteUrl: ""            // z. B. "https://NAME.github.io/REPO/"
+  supabaseUrl: "https://ztfgjnlhketuqmggoakr.supabase.co",
+  supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0Zmdqbmxoa2V0dXFtZ2dvYWtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM2NDk3MzQsImV4cCI6MjEwOTIyNTczNH0.ZaEN0sA3q1FiJM2HOecKyMxYeAfY8cm7uhHa_zbFTQw",
+  siteUrl: "https://vbrt.github.io/kyushu-trip/"
 };
