@@ -16,14 +16,14 @@ window.TRIP = {
   routeLine: "Osaka · Fukuoka · Beppu · Miyazaki · Kirishima · Kumamoto · Unzen · Nagasaki · Ureshino · Osaka",
   intro: "Round two in Japan, this time a road trip around Kyushu: New Year's Eve in Fukuoka, hot springs in Beppu and Unzen, volcanoes in Kirishima and Nagasaki's Chinatown. Follow along here.",
   footer: "Greetings from Japan",
-  heroImage: "img/hero.jpg",
-  cockpitHero: "img/cockpit-hero.jpg",
+  heroImage: "img/hero.jpg?v=5",
+  cockpitHero: "img/cockpit-hero.jpg?v=5",
   noSignalNote: "",
 
   people: [
     { key: "sara", name: "Sara", img: "img/p-sara.jpg", nick: "The Photographer", bio: "Takes 1,000 photos before breakfast and inspects every hotel like a Michelin judge. Will happily walk 40 minutes for the perfect matcha or a tiny shop without a sign." },
     { key: "ugo",  name: "Ugo",  img: "img/p-ugo.jpg",  nick: "Player One", bio: "Sara's best friend. Has clocked more hours on his Nintendo Switch than at his actual job and treats Japan as the final level. May need to be dragged out of every arcade." },
-    { key: "theo", name: "Theo", img: "img/p-theo.jpg", nick: "Croissant Hunter", bio: "Ugo's brother and just as Japan-obsessed. Flew 9,000 km to the land of ramen and sushi to find… the perfect croissant. Kyushu's bakeries have been warned." }
+    { key: "theo", name: "Theo", img: "img/p-theo.jpg?v=5", nick: "Croissant Hunter", bio: "Ugo's brother and just as Japan-obsessed. Flew 9,000 km to the land of ramen and sushi to find… the perfect croissant. Kyushu's bakeries have been warned." }
   ],
 
   features: { blog: true, costs: true, wishes: true },
