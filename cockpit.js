@@ -146,7 +146,8 @@ const ABICON = {
   car:'<path d="M3 13l2-5h10l2 5v3h-2m-10 0H3v-3h14M6 16a1.5 1.5 0 1 0 0 .01M14 16a1.5 1.5 0 1 0 0 .01"/>',
   train:'<path d="M6 3h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM4 9h12M7 15l-2 3m10-3 2 3"/>',
   ferry:'<path d="M3 15c2 1.5 4 1.5 7 0s5-1.5 7 0M5 13l-1-4h12l-1 4M7 9V6h6v3"/>',
-  plane:'<path d="M2 11l16-6-5 12-3-5-8-1zm8 1 3-3"/>'
+  plane:'<path d="M2 11l16-6-5 12-3-5-8-1zm8 1 3-3"/>',
+  bus:'<path d="M5 3h10a2 2 0 0 1 2 2v10H3V5a2 2 0 0 1 2-2zM3 10h14M6 15v2m8-2v2M6 12.5h.01M14 12.5h.01"/>'
 };
 const fmtDay = iso => { const d = new Date(iso + "T12:00:00"); return d.getDate() + " " + d.toLocaleString("en-GB",{month:"short"}); };
 const fmtDur = m => m >= 60 ? Math.floor(m/60) + " h" + (m % 60 ? " " + (m % 60) : "") : m + " min";

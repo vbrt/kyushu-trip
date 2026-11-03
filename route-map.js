@@ -21,7 +21,8 @@ window.ROUTE_GEO = {"w":360,"h":400,"land":"M160.6,405L161.9,403.9L164.4,395L163
     const cur = NAME[curKey] ? curKey : "";
     const poly = ([pts, m]) => `<polyline points="${pts.map(k => P[k].join(",")).join(" ")}" class="rm-${m}"/>`;
     const osaka = `<path class="rm-train" d="M${P.fuk[0]} ${P.fuk[1]} Q ${P.fuk[0]+90} ${P.fuk[1]-60} ${G.w-14} 14"/>
-      <text x="${G.w-10}" y="30" text-anchor="end" class="rm-osaka">Osaka ↗</text>`;
+      <text x="${G.w-10}" y="30" text-anchor="end" class="rm-osaka">Osaka ↗</text>
+      <path class="rm-ferry" fill="none" d="M${P.bep[0]} ${P.bep[1]} Q ${P.bep[0]+70} ${P.bep[1]+5} ${G.w-6} ${Math.max(40, P.bep[1]-90)}"/>`;
     const wps = Object.entries(WP).map(([k,[nm,dx,dy,an]]) => { const [x,y] = P[k];
       return `<g class="rm-wp"><circle cx="${x}" cy="${y}" r="2.6"/><text x="${x+dx}" y="${y+dy}" text-anchor="${an}">${nm}</text></g>`; }).join("");
     const dots = ORDER.map(k => { const [x,y] = P[k], [dx,dy,an] = LBL[k];

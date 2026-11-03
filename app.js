@@ -104,7 +104,7 @@ function render(){
   </footer>`;
   bind();
 }
-const LEGICON = { car:"🚗", ferry:"⛴️", train:"🚄", plane:"✈️" };
+const LEGICON = { car:"🚗", ferry:"⛴️", train:"🚄", plane:"✈️", bus:"🚌" };
 const fmtMin = m => m >= 60 ? Math.floor(m/60) + " h" + (m % 60 ? " " + (m % 60) + " min" : "") : m + " min";
 function legHtml(legs, day){
   const L = Array.isArray(legs) ? legs : legs ? [legs] : [];
