@@ -1,6 +1,6 @@
 {
-  "name": "Kyushu Cockpit",
-  "short_name": "Cockpit",
+  "name": "Kyushu Trav",
+  "short_name": "Kyushu Trav",
   "description": "Private trip cockpit",
   "start_url": "./cockpit.html",
   "scope": "./",
