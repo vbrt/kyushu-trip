@@ -23,7 +23,7 @@ window.TRIP = {
   people: [
     { key: "sara", name: "Sara", img: "img/p-sara.jpg", nick: "The Vegan Princess", bio: "Demands a royal plant-based feast at every stop, no dashi smuggled in, and inspects every hotel like a Michelin judge. Will happily walk 40 minutes for the perfect matcha or a tiny shop without a sign." },
     { key: "ugo",  name: "Ugo",  img: "img/p-ugo.jpg",  nick: "Player One", bio: "Sara's best friend. Has clocked more hours on his Nintendo Switch than at his actual job and treats Japan as the final level. May need to be dragged out of every arcade." },
-    { key: "theo", name: "Theo", img: "img/p-theo.jpg?v=5", nick: "Croissant Hunter", bio: "Is just as Japan-obsessed as the others. Flew 9,000 km to the land of ramen and sushi to find… the perfect croissant. Can't fall asleep without a Japanese crêpe and, though he's part of the gang, always sneaks off to do his own thing." }
+    { key: "theo", name: "Theo", img: "img/p-theo.jpg?v=5", nick: "Crêpe Hunter", bio: "Just as Japan-obsessed as Ugo. Can't fall asleep without a Japanese crêpe, so every town gets scanned for the nearest stand. Part of the gang, but always sneaks off to do his own thing." }
   ],
 
   features: { blog: true, costs: false, wishes: true },
