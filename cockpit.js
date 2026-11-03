@@ -47,10 +47,10 @@ function renderCount(){
 /* ============ HEUTE ============ */
 function isoOf(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
 function dayFor(date){ const iso = isoOf(date); return DAYS.find(d => d.date === iso); }
-function slotList(){ return [...FLIGHTS, ...STAYS, ...TRANSFERS].filter(x => x.slot).map(x => x.slot); }
+function slotList(){ return [...FLIGHTS, ...STAYS, ...TRANSFERS].filter(x => x.slot); }
 function slotsDone(){
   const slots = slotList();
-  const done = slots.filter(s => (state.uploads[s]?.files||[]).length || (state.notes["slot-"+s]?.text||"").trim()).length;
+  const done = slots.filter(x => x.doc || (state.uploads[x.slot]?.files||[]).length || (state.notes["slot-"+x.slot]?.text||"").trim()).length;
   return {done, total: slots.length};
 }
 function openTodos(){
@@ -158,7 +158,7 @@ function noteBox(key, ph){
   return `<textarea class="note" data-note="${esc(key)}" placeholder="${esc(ph)}" ${state.canWrite ? "" : "readonly"}>${esc(n?.text||"")}</textarea>
    <div class="notebar"><span>${PLURAL ? "Visible to the whole group" : "Only for you"}, saves automatically</span><span data-meta="${esc(key)}">${meta}</span></div>`;
 }
-function slotBox(slot, label, slotOwner){
+function slotBox(slot, label, slotOwner, doc){
   const files = state.uploads[slot]?.files || [];
   const noteTxt = (state.notes["slot-"+slot]?.text||"").trim();
   const done = files.length || noteTxt;
@@ -168,6 +168,15 @@ function slotBox(slot, label, slotOwner){
     return `<a href="${url}" target="_blank" rel="noopener" title="${esc(f.name)}">${isImg ? `<img src="${url}" alt="${esc(f.name)}" loading="lazy">` : `<span class="pdf">PDF</span>`}</a>`;
   }).join("");
   const canUp = !!state.assets;
+  const upRow = `<div class="addrow" style="align-items:center">
+      ${canUp ? `<label class="btn ghost">Upload screenshot or PDF<input type="file" accept="image/*,application/pdf" multiple data-upload="${esc(slot)}"></label>` : `<span class="small muted">Uploading works for everyone with edit access.</span>`}
+      <span class="small muted" data-upstatus="${esc(slot)}"></span>
+    </div>`;
+  if(doc) return `<div class="slot done compact" data-slot="${esc(slot)}">
+    <div class="chips"><span class="chip ok">✓ Confirmation on file</span><span class="small muted">${esc(doc)}</span></div>
+    ${thumbs ? `<div class="thumbs">${thumbs}</div>` : ""}
+    <details class="more"><summary>Add a file or note</summary>${upRow}<div style="margin-top:8px">${noteBox("slot-"+slot, "Anything else worth knowing …")}</div></details>
+  </div>`;
   return `<div class="slot ${done ? "done" : ""}" data-slot="${esc(slot)}">
     <div class="chips" style="margin-bottom:6px">${done ? '<span class="chip ok">Uploaded</span>' : `<span class="chip trail">${esc(slotOwner ? slotOwner + " uploads" : "Missing")}</span>`}</div>
     <div class="small">${esc(label)}</div>
@@ -190,7 +199,7 @@ function renderBuchungen(){
      <div class="small muted">${esc(f.carrier||"")}</div>
      ${f.code ? `<div><span class="code">${esc(f.code)} ${copyBtn(f.code)}</span></div>` : ""}
      ${f.info ? `<div class="small">${esc(f.info)}</div>` : ""}
-     ${f.slot ? slotBox(f.slot, "Confirmation with flight number, booking code and baggage", f.slotBy) : `<details class="more"><summary>Notes</summary>${noteBox("bk-"+f.id, "e.g. seats, baggage …")}</details>`}
+     ${f.slot ? slotBox(f.slot, "Confirmation with flight number, booking code and baggage", f.slotBy, f.doc) : `<details class="more"><summary>Notes</summary>${noteBox("bk-"+f.id, "e.g. seats, baggage …")}</details>`}
    </div>`).join("")}
   ${STAYS.length ? `<h3 style="text-transform:uppercase;letter-spacing:.05em;margin-top:6px">Accommodation</h3>` : ""}
   ${STAYS.map(s => `<div class="card bk">
@@ -198,15 +207,17 @@ function renderBuchungen(){
      <h3 style="margin:0">${esc(s.name)} ${s.place ? `<span class="muted small">· ${esc(s.place)}</span>` : ""}</h3>
      ${s.addr ? `<div>${esc(s.addr)} · <a href="${mapsUrl(s.map || s.addr)}" target="_blank" rel="noopener">📍&nbsp;Map</a></div>` : s.map ? `<div>${mapLink(s.map)}</div>` : ""}
      ${(s.kv||[]).length ? `<dl class="kv">${s.kv.map(([k,val]) => `<dt>${esc(k)}</dt><dd>${esc(val)}</dd>`).join("")}</dl>` : ""}
+     ${(s.copy||[]).map(([k,val]) => `<div><span class="code">${esc(k)}: ${esc(val)} ${copyBtn(val)}</span></div>`).join("")}
+     ${s.tel ? `<div class="small"><a href="tel:${esc(s.tel.replace(/[^+0-9]/g,""))}">📞 ${esc(s.tel)}</a></div>` : ""}
      ${s.info ? `<div class="small" style="margin-top:4px">${esc(s.info)}</div>` : ""}
-     ${s.slot ? slotBox(s.slot, "Booking confirmation with address, check-in/out and booking number", s.slotBy) : `<details class="more"><summary>Notes</summary>${noteBox("bk-"+s.id,"e.g. door code, booking number …")}</details>`}
+     ${s.slot ? slotBox(s.slot, "Booking confirmation with address, check-in/out and booking number", s.slotBy, s.doc) : `<details class="more"><summary>Notes</summary>${noteBox("bk-"+s.id,"e.g. door code, booking number …")}</details>`}
    </div>`).join("")}
   ${TRANSFERS.map((x,i) => `<div class="card bk">
      <div class="head"><span class="eyebrow muted">${esc(x.when||"")}</span>${x.status ? `<span class="chip ${esc(x.status[1]||"")}">${esc(x.status[0])}</span>` : ""}</div>
      <h3 style="margin:0">${esc(x.title)}</h3>
      ${(x.kv||[]).length ? `<dl class="kv">${x.kv.map(([k,val]) => `<dt>${esc(k)}</dt><dd>${esc(val)}</dd>`).join("")}</dl>` : ""}
      ${(x.copy||[]).map(([k,val]) => `<div><span class="code">${esc(k)}: ${esc(val)} ${copyBtn(val)}</span></div>`).join("")}
-     ${x.slot ? slotBox(x.slot, "Confirmation", x.slotBy) : `<details class="more"><summary>Notes</summary>${noteBox("bk-x"+(x.id||i),"Notes …")}</details>`}
+     ${x.slot ? slotBox(x.slot, "Confirmation", x.slotBy, x.doc) : `<details class="more"><summary>Notes</summary>${noteBox("bk-x"+(x.id||i),"Notes …")}</details>`}
   </div>`).join("")}
   ${!FLIGHTS.length && !STAYS.length && !TRANSFERS.length ? '<p class="muted">No bookings yet.</p>' : ""}`;
   bindNotes(v); bindUploads(v); bindCopy(v);
