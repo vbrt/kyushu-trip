@@ -161,31 +161,23 @@ function noteBox(key, ph){
 function slotBox(slot, label, slotOwner, doc){
   const files = state.uploads[slot]?.files || [];
   const noteTxt = (state.notes["slot-"+slot]?.text||"").trim();
-  const done = files.length || noteTxt;
+  const done = doc || files.length || noteTxt;
   const thumbs = files.map(f => {
     const url = esc(blobUrl(f.id));
     const isImg = (f.type||"").startsWith("image/");
     return `<a href="${url}" target="_blank" rel="noopener" title="${esc(f.name)}">${isImg ? `<img src="${url}" alt="${esc(f.name)}" loading="lazy">` : `<span class="pdf">PDF</span>`}</a>`;
   }).join("");
   const canUp = !!state.assets;
-  const upRow = `<div class="addrow" style="align-items:center">
-      ${canUp ? `<label class="btn ghost">Upload screenshot or PDF<input type="file" accept="image/*,application/pdf" multiple data-upload="${esc(slot)}"></label>` : `<span class="small muted">Uploading works for everyone with edit access.</span>`}
-      <span class="small muted" data-upstatus="${esc(slot)}"></span>
-    </div>`;
-  if(doc) return `<div class="slot done compact" data-slot="${esc(slot)}">
-    <div class="chips"><span class="chip ok">✓ Confirmation on file</span><span class="small muted">${esc(doc)}</span></div>
-    ${thumbs ? `<div class="thumbs">${thumbs}</div>` : ""}
-    <details class="more"><summary>Add a file or note</summary>${upRow}<div style="margin-top:8px">${noteBox("slot-"+slot, "Anything else worth knowing …")}</div></details>
-  </div>`;
-  return `<div class="slot ${done ? "done" : ""}" data-slot="${esc(slot)}">
-    <div class="chips" style="margin-bottom:6px">${done ? '<span class="chip ok">Uploaded</span>' : `<span class="chip trail">${esc(slotOwner ? slotOwner + " uploads" : "Missing")}</span>`}</div>
-    <div class="small">${esc(label)}</div>
-    ${thumbs ? `<div class="thumbs">${thumbs}</div>` : ""}
-    <div class="addrow" style="align-items:center">
-      ${canUp ? `<label class="btn ghost">Upload screenshot or PDF<input type="file" accept="image/*,application/pdf" multiple data-upload="${esc(slot)}"></label>` : `<span class="small muted">Uploading works for everyone with edit access.</span>`}
-      <span class="small muted" data-upstatus="${esc(slot)}"></span>
+  const what = [doc ? esc(doc) : "", files.length ? `${files.length} file${files.length > 1 ? "s" : ""}` : "", noteTxt && !doc && !files.length ? "note" : ""].filter(Boolean).join(" · ");
+  const status = done ? `<span class="sb-ok">✓ Confirmation on file</span>${what ? `<span class="sb-what">${what}</span>` : ""}`
+    : `<span class="sb-miss">${esc(slotOwner ? slotOwner + ": confirmation missing" : "Confirmation missing")}</span>`;
+  return `<div class="slotbar ${done ? "done" : ""}" data-slot="${esc(slot)}">
+    <div class="sb-row">${status}
+      ${canUp ? `<label class="sb-add" title="${esc(label)}">📎 ${done ? "Add" : "Upload"}<input type="file" accept="image/*,application/pdf" multiple data-upload="${esc(slot)}"></label>` : ""}
     </div>
-    <div style="margin-top:8px">${noteBox("slot-"+slot, "Or type it here: flight number, booking code, address …")}</div>
+    ${thumbs ? `<div class="sb-thumbs">${thumbs}</div>` : ""}
+    <span class="small muted" data-upstatus="${esc(slot)}"></span>
+    <details class="sb-note"><summary>${noteTxt ? "Note" : "Add a note"}</summary>${noteBox("slot-"+slot, "Booking code, door code, anything worth knowing …")}</details>
   </div>`;
 }
 function copyBtn(v){ return `<button class="copy" type="button" data-copy="${esc(v)}">Copy</button>`; }
