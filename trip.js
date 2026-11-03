@@ -16,8 +16,8 @@ window.TRIP = {
   routeLine: "Osaka · Fukuoka · Beppu · Miyazaki · Kirishima · Kumamoto · Unzen · Nagasaki · Ureshino · Osaka",
   intro: "Round two in Japan, this time a road trip around Kyushu: New Year's Eve in Fukuoka, hot springs in Beppu and Unzen, volcanoes in Kirishima and Nagasaki's Chinatown. Follow along here.",
   footer: "Greetings from Japan",
-  heroImage: "img/cover-yukata.jpg",
-  cockpitHero: "img/cover-yukata-wide.jpg",
+  heroImage: "img/cover-yukata.jpg?v=2",
+  cockpitHero: "img/cover-yukata-wide.jpg?v=2",
   noSignalNote: "",
 
   people: [

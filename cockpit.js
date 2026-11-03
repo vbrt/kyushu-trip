@@ -133,6 +133,7 @@ function dayCard(day, big){
       <h3>${esc(day.title)}</h3>
       ${day.where ? `<div class="where">${esc(day.where)}</div>` : ""}
       <ul class="steps">${(day.steps||[]).map(stepHtml).join("")}</ul>
+      ${day.alt ? `<details class="altplan"><summary>${esc(day.alt.label || "Plan B")}${day.alt.c ? claudeChip(true) : ""}</summary>${day.alt.intro ? `<p class="small muted" style="margin:6px 0 0">${esc(day.alt.intro)}</p>` : ""}<ul class="steps">${(day.alt.steps||[]).map(stepHtml).join("")}</ul></details>` : ""}
       ${day.sleep ? `<div class="sleep"><span class="chip grey">Night</span> ${esc(day.sleep)}</div>` : ""}
     </div></article>`;
 }
