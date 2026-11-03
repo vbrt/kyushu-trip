@@ -127,19 +127,25 @@ function dayCard(day, big){
   const cls = date.getTime() === t ? "today" : (date.getTime() < t ? "past" : "");
   const n = Math.round((date - TRIP_DAY1)/864e5) + 1;
   return `<article class="day ${big ? "" : cls}" id="tag-${n}">
-    <div class="datecol"><div class="d">${date.getDate()}</div><div class="m">${WDAYS[date.getDay()]} · ${MONTHS[date.getMonth()]}</div><div class="n">Day ${n}</div></div>
+    <div class="datecol"><div class="d">${date.getDate()}</div><div class="m">${WDAYS[date.getDay()]} · ${MONTHS[date.getMonth()]}</div>${/^Day \d/.test(day.title || "") ? "" : `<div class="n">Day ${n}</div>`}</div>
     <div>
       ${(day.tags||[]).length ? `<div class="chips" style="margin-bottom:4px">${day.tags.map(([l,c]) => `<span class="chip ${esc(c||"")}">${esc(l)}</span>`).join("")}</div>` : ""}
       <h3>${esc(day.title)}</h3>
       ${day.where ? `<div class="where">${esc(day.where)}</div>` : ""}
-      <ul class="steps">${(day.steps||[]).map(([t,s]) => `<li><span class="t">${esc(t)}</span><span>${esc(s)}</span></li>`).join("")}</ul>
+      <ul class="steps">${(day.steps||[]).map(stepHtml).join("")}</ul>
       ${day.sleep ? `<div class="sleep"><span class="chip grey">Night</span> ${esc(day.sleep)}</div>` : ""}
     </div></article>`;
+}
+const mapLink = q => q ? ` <a class="maplink" href="${mapsUrl(q)}" target="_blank" rel="noopener">📍&nbsp;Map</a>` : "";
+const claudeChip = c => c ? ' <span class="chip claude">✨ Claude</span>' : "";
+function stepHtml(st){
+  if(Array.isArray(st)) return `<li><span class="t">${esc(st[0])}</span><span>${esc(st[1])}</span></li>`;
+  return `<li class="${st.c ? "tip" : ""}"><span class="t">${esc(st.t || "")}</span><span>${st.go ? `<span class="go">${esc(st.go)}</span>` : ""}<b>${esc(st.n || "")}</b>${mapLink(st.q)}${claudeChip(st.c)}${st.d ? `<span class="sd">${esc(st.d)}</span>` : ""}</span></li>`;
 }
 function renderPlan(){
   const S = T.stops || [], ti = isoOf(today0()), si = S.findIndex(s => ti >= s.from && ti <= s.to);
   const rm = $("#routeOverview");
-  if(rm && window.routeMapSvg) rm.innerHTML = `<div class="card"><div class="sechead"><h3>Route</h3>${T.roadTrip ? `<span class="small muted">🚗 ≈ ${esc(T.roadTrip.km)} km road trip</span>` : ""}</div>
+  if(rm && window.routeMapSvg) rm.innerHTML = `<div class="card"><div class="sechead"><h3>Route</h3>${T.roadTrip ? `<span class="small muted">🚗 ≈ ${esc(T.roadTrip.km)} km by car</span>` : ""}</div>
     <div class="rmwrap">${window.routeMapSvg(si >= 0 ? S[si].key : "", S.slice(0, Math.max(si,0)).map(s => s.key))}</div>
     <h3 style="margin:14px 0 4px">Getting from A to B</h3><ol class="legs">${S.filter(s => (s.legs||[]).length).map(s => `<li><span class="small muted">${esc(s.dt)}</span>${window.legHtml ? window.legHtml(s.legs) : ""}</li>`).join("")}</ol></div>`;
   $("#days").innerHTML = DAYS.length ? DAYS.map(d => dayCard(d,false)).join("") : '<p class="muted">No itinerary yet.</p>';
@@ -190,7 +196,7 @@ function renderBuchungen(){
   ${STAYS.map(s => `<div class="card bk">
      <div class="head"><span class="eyebrow muted">${esc(s.when)}</span>${s.status ? `<span class="chip ${esc(s.status[1]||"")}">${esc(s.status[0])}</span>` : ""}</div>
      <h3 style="margin:0">${esc(s.name)} ${s.place ? `<span class="muted small">· ${esc(s.place)}</span>` : ""}</h3>
-     ${s.addr ? `<div>${esc(s.addr)} · <a href="${mapsUrl(s.map || s.addr)}" target="_blank" rel="noopener">Map</a></div>` : ""}
+     ${s.addr ? `<div>${esc(s.addr)} · <a href="${mapsUrl(s.map || s.addr)}" target="_blank" rel="noopener">📍&nbsp;Map</a></div>` : s.map ? `<div>${mapLink(s.map)}</div>` : ""}
      ${(s.kv||[]).length ? `<dl class="kv">${s.kv.map(([k,val]) => `<dt>${esc(k)}</dt><dd>${esc(val)}</dd>`).join("")}</dl>` : ""}
      ${s.info ? `<div class="small" style="margin-top:4px">${esc(s.info)}</div>` : ""}
      ${s.slot ? slotBox(s.slot, "Booking confirmation with address, check-in/out and booking number", s.slotBy) : `<details class="more"><summary>Notes</summary>${noteBox("bk-"+s.id,"e.g. door code, booking number …")}</details>`}
@@ -214,13 +220,13 @@ function renderOrte(){
   if(!keys.length){ v.innerHTML = '<div class="sechead"><h2>Places & tips</h2></div><p class="muted">No place tips yet.</p>'; return; }
   if(!place || !GUIDES[place]) place = keys[0];
   const p = GUIDES[place];
-  v.innerHTML = `<div class="sechead"><h2>Places & tips</h2></div>
+  v.innerHTML = `<div class="sechead"><h2>Places & tips</h2><span class="chip claude">✨ Suggestions by Claude</span></div>
   <div class="placetabs" role="group" aria-label="Choose a place">${keys.map(k => `<button type="button" data-p="${esc(k)}" aria-pressed="${k===place}">${esc(GUIDES[k].name)}</button>`).join("")}</div>
   <div class="card place">${p.intro ? `<p style="margin:0 0 6px">${esc(p.intro)}</p>` : ""}
-    ${(p.must||[]).length ? `<h3>Don't miss</h3><div class="tips">${p.must.map(([k,t],i) => `<div class="tip"><span class="k">${i+1}</span><div><b>${esc(k)}</b> · ${esc(t)}</div></div>`).join("")}</div>` : ""}
+    ${(p.must||[]).length ? `<h3>Don't miss</h3><div class="tips">${p.must.map(([k,t,q],i) => `<div class="tip"><span class="k">${i+1}</span><div><b>${esc(k)}</b>${mapLink(q)} · ${esc(t)}</div></div>`).join("")}</div>` : ""}
   </div>
   <div class="grid2">
-    ${(p.food||[]).length ? `<div class="card place"><h3>Food & drink</h3><div class="tips">${p.food.map(([k,t]) => `<div><b>${esc(k)}</b><div class="small">${esc(t)}</div></div>`).join("")}</div></div>` : ""}
+    ${(p.food||[]).length ? `<div class="card place"><h3>Food & drink</h3><div class="tips">${p.food.map(([k,t,q]) => `<div><b>${esc(k)}</b>${mapLink(q)}<div class="small">${esc(t)}</div></div>`).join("")}</div></div>` : ""}
     ${(p.practical||[]).length ? `<div class="card place"><h3>Practical</h3><ul class="dots">${p.practical.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>` : ""}
   </div>
   <div class="card"><h3>Ideas for ${esc(p.name)}</h3>${noteBox("ort-"+place, "Tips from friends, ideas, finds …")}</div>`;
@@ -239,7 +245,7 @@ function todoRow(t){
   const prioDot = t.prio === "crit" ? '<span class="chip crit" style="margin-right:6px">important</span>' : "";
   return `<div class="todo ${t.done ? "done" : ""}">
     <input type="checkbox" class="chk" id="c-${esc(key)}" data-check="${esc(key)}" ${t.done ? "checked" : ""} ${(!state.canWrite || t.auto) ? "disabled" : ""} aria-label="${esc(t.t)} done">
-    <label class="tt" for="c-${esc(key)}"><b>${prioDot}${esc(t.t)}</b>${t.sub ? `<div class="sub">${esc(t.sub)}</div>` : ""}${t.link && /^https:\/\//.test(t.link) ? `<div class="sub"><a href="${esc(t.link)}" target="_blank" rel="noopener">${esc(t.link.replace(/^https?:\/\//,""))}</a></div>` : ""}${t.auto ? '<div class="sub">Ticks itself once all confirmations are uploaded.</div>' : ""}</label>
+    <label class="tt" for="c-${esc(key)}"><b>${prioDot}${esc(t.t)}</b>${claudeChip(t.c)}${t.sub ? `<div class="sub">${esc(t.sub)}</div>` : ""}${t.link && /^https:\/\//.test(t.link) ? `<div class="sub"><a href="${esc(t.link)}" target="_blank" rel="noopener">${esc(t.link.replace(/^https?:\/\//,""))}</a></div>` : ""}${t.auto ? '<div class="sub">Ticks itself once all confirmations are uploaded.</div>' : ""}</label>
     <span class="due">${dueChip}</span></div>`;
 }
 function renderOrga(){

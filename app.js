@@ -93,7 +93,7 @@ function render(){
     </section>
     ${wxHtml(si)}
     ${PLACEINFO.length ? `<section aria-labelledby="h-places" style="display:grid;gap:12px"><h2 id="h-places">Places on the route</h2>
-      <div class="places">${PLACEINFO.map(pl => `<article class="card place"><h3>${esc(pl.nm)}</h3><div class="when">${esc(pl.when)}</div><p>${esc(pl.p)}</p>${pl.f ? `<div class="fact"><b>Did you know?</b> ${esc(pl.f)}</div>` : ""}</article>`).join("")}</div></section>` : ""}
+      <div class="places">${PLACEINFO.map(pl => `<article class="card place"><h3>${esc(pl.nm)} <a class="maplink" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pl.q || pl.nm + ", Japan")}" target="_blank" rel="noopener">📍&nbsp;Map</a></h3><div class="when">${esc(pl.when)}</div><p>${esc(pl.p)}</p>${pl.f ? `<div class="fact"><b>Did you know?</b> ${esc(pl.f)}</div>` : ""}</article>`).join("")}</div></section>` : ""}
     <section aria-labelledby="h-crew" style="display:grid;gap:12px"><h2 id="h-crew">${PLURAL ? "The crew" : "About me"}</h2>
       <div class="crew">${(T.people||[]).map(p => p.key).map(k => `<div class="card mate"><img src="${PEOPLE[k].img}" alt="${PEOPLE[k].name}"><div><span class="nick">${esc(PEOPLE[k].nick)}</span><b>${PEOPLE[k].name}</b><span class="small muted">${esc(PEOPLE[k].bio)}</span></div></div>`).join("")}</div></section>
   </main>
@@ -110,7 +110,7 @@ function legHtml(legs){
   const L = Array.isArray(legs) ? legs : legs ? [legs] : [];
   return L.map(l => {
     const meta = [l.min ? "≈ " + fmtMin(l.min) : "", l.km ? "≈ " + l.km + " km" : ""].filter(Boolean).join(" · ");
-    const pct = l.min ? Math.max(8, Math.round(l.min / 150 * 100)) : 0;
+    const pct = l.min ? Math.max(8, Math.round(l.min / 330 * 100)) : 0;
     return `<div class="leg leg-${esc(l.mode)}"><span class="leg-ic" aria-hidden="true">${LEGICON[l.mode] || "•"}</span>
       <div class="leg-b"><div class="leg-t"><b>${esc(l.from || "")} → ${esc(l.to || "")}</b>${meta ? `<span class="leg-m">${esc(meta)}</span>` : ""}</div>
       ${pct ? `<div class="leg-bar"><i style="width:${Math.min(100,pct)}%"></i></div>` : ""}
