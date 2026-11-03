@@ -9,10 +9,10 @@ window.TRIP = {
   title: "Sara, Ugo & Theo",
   titleAccent: "back in Japan",
   cockpitTitle: ["Kyushu", "Cockpit"],
-  dateLabel: "27 Dec 2026 – 16 Jan 2027",
-  start: "2026-12-27T08:00",              // Sara flies out (exact time still open)
-  end: "2027-01-16T23:00",                // flight home
-  departLabel: "Sara flies out on 27 December",
+  dateLabel: "27 Dec 2026 – 17 Jan 2027",
+  start: "2026-12-27T08:45",              // Sara: Finnair from Berlin
+  end: "2027-01-17T08:00",                // lands in Berlin
+  departLabel: "Sara: Berlin 08:45 via Helsinki",
   routeLine: "Osaka · Fukuoka · Beppu · Miyazaki · Kirishima · Kumamoto · Unzen · Nagasaki · Ureshino · Osaka",
   intro: "Round two in Japan, this time a road trip around Kyushu: New Year's Eve in Fukuoka, hot springs in Beppu and Unzen, volcanoes in Kirishima and Nagasaki's Chinatown. Follow along here.",
   footer: "Greetings from Japan",
@@ -34,7 +34,7 @@ window.TRIP = {
 
   // "to" = last night in this place. "legs" = how you get here (approximate; min = minutes for the bar)
   stops: [
-    { nm: "Getting there", ds: "Flight to Japan", from: "2026-12-27", to: "2026-12-27", dt: "27 Dec", legs: [{ mode: "plane", from: "Home", to: "Osaka", text: "Everyone flies in separately" }] },
+    { nm: "Getting there", ds: "Flight to Japan", from: "2026-12-27", to: "2026-12-27", dt: "27–28 Dec", legs: [{ mode: "plane", from: "Berlin", to: "Osaka", who: "Sara", text: "via Helsinki, lands 28 Dec 12:50 · Ugo & Theo fly in separately" }] },
     { nm: "Osaka", ds: "Reunion, waterfalls, temples and street food", from: "2026-12-28", to: "2026-12-29", dt: "28–30 Dec", key: "osa", legs: [] },
     { nm: "Fukuoka", ds: "Itoshima torii, yatai and New Year's Eve", from: "2026-12-30", to: "2026-12-31", dt: "30 Dec – 1 Jan", key: "fuk", legs: [{ mode: "train", from: "Osaka", to: "Fukuoka", min: 150, km: 620, who: "Sara", text: "Shinkansen" }, { mode: "ferry", from: "Osaka", to: "Kyushu", who: "Ugo & Theo", text: "Overnight ferry" }] },
     { nm: "Beppu", ds: "Road trip starts: Yufuin, hells and onsen hopping", from: "2027-01-01", to: "2027-01-02", dt: "1–3 Jan", key: "bep", legs: [{ mode: "car", from: "Fukuoka", to: "Beppu", min: 135, km: 140, text: "Via Yufuin · pick up the rental car first" }] },
@@ -44,8 +44,8 @@ window.TRIP = {
     { nm: "Unzen", ds: "Onsen with a sea view", from: "2027-01-08", to: "2027-01-08", dt: "8–9 Jan", key: "unz", legs: [{ mode: "ferry", from: "Kumamoto", to: "Unzen", min: 135, km: 45, text: "Incl. 30 min car ferry to Shimabara, stop in Obama" }] },
     { nm: "Nagasaki", ds: "Chinatown and night views", from: "2027-01-09", to: "2027-01-10", dt: "9–11 Jan", key: "nag", legs: [{ mode: "car", from: "Unzen", to: "Nagasaki", min: 80, km: 60 }] },
     { nm: "Ureshino", ds: "Inari shrine, porcelain villages, Huis Ten Bosch", from: "2027-01-11", to: "2027-01-12", dt: "11–13 Jan", key: "ure", legs: [{ mode: "car", from: "Nagasaki", to: "Ureshino", min: 180, km: 155, text: "Via Yūtoku Inari, Okawachiyama and Arita" }] },
-    { nm: "Osaka", ds: "Universal Studios and last days in the city", from: "2027-01-13", to: "2027-01-15", dt: "13–16 Jan", key: "osa", legs: [{ mode: "car", from: "Ureshino", to: "Fukuoka", min: 210, km: 220, who: "All three", text: "Via Hamanoura and Tanushimaru · return the rental car" }, { mode: "train", from: "Fukuoka", to: "Osaka", min: 150, km: 620, who: "Sara", text: "Shinkansen · Ugo & Theo follow on 14 Jan" }] },
-    { nm: "Home", ds: "Flight home", from: "2027-01-16", to: "2099-12-31", dt: "16 Jan", legs: [{ mode: "plane", from: "Osaka", to: "Home", text: "Flights home" }] }
+    { nm: "Osaka", ds: "Universal Studios and last days in the city", from: "2027-01-13", to: "2027-01-16", dt: "13–16 Jan", key: "osa", legs: [{ mode: "car", from: "Ureshino", to: "Fukuoka", min: 210, km: 220, who: "All three", text: "Via Hamanoura and Tanushimaru · return the rental car" }, { mode: "train", from: "Fukuoka", to: "Osaka", min: 150, km: 620, who: "Sara", text: "Shinkansen · Ugo & Theo follow on 14 Jan" }] },
+    { nm: "Home", ds: "Flight home", from: "2027-01-17", to: "2099-12-31", dt: "16–17 Jan", legs: [{ mode: "plane", from: "Osaka", to: "Berlin", who: "Sara", text: "KIX 23:25 via Helsinki, lands 17 Jan 08:00" }] }
   ],
   roadTrip: { km: "1,600", note: "incl. day trips, by rental car 1–13 Jan" },
   places: ["On the road", "Osaka", "Fukuoka", "Beppu", "Miyazaki", "Kirishima", "Kumamoto", "Unzen", "Nagasaki", "Ureshino", "Home"],
