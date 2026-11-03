@@ -169,7 +169,7 @@ function studioHtml(){
       <label>Status<select id="pStatus">${STATUSES.map(s => `<option value="${esc(s)}">${s ? esc(s) : "(none)"}</option>`).join("")}</select></label>
       <label>Text<textarea id="pText" maxlength="4000" placeholder="What happened today?"></textarea></label>
       <label>Photos or videos (up to 8)<input id="pMedia" type="file" accept="image/*,video/*" multiple></label>
-      <label class="chk"><input type="checkbox" id="pSaver" ${saver ? "checked" : ""}> Data saver: smaller photos, ideal on a weak connection</label>
+      <label class="saver"><input type="checkbox" id="pSaver" ${saver ? "checked" : ""}> Data saver: smaller photos, ideal on a weak connection</label>
       <div class="previews" id="pPrev"></div>
       <div><button class="btn" type="submit" id="pSubmit">Publish</button></div>
       <div class="msg" id="pMsg" aria-live="polite"></div>
