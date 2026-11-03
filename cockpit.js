@@ -129,19 +129,111 @@ function dayCard(day, big){
   return `<article class="day ${big ? "" : cls}" id="tag-${n}">
     <div class="datecol"><div class="d">${date.getDate()}</div><div class="m">${WDAYS[date.getDay()]} · ${MONTHS[date.getMonth()]}</div>${/^Day \d/.test(day.title || "") ? "" : `<div class="n">Day ${n}</div>`}</div>
     <div>
+      ${!big && state.canWrite ? `<button type="button" class="edbtn" data-edit="${esc(day.date)}">${planEditing.has(day.date) ? "Done" : "✎ Edit"}</button>` : ""}
       ${(day.tags||[]).length ? `<div class="chips" style="margin-bottom:4px">${day.tags.map(([l,c]) => `<span class="chip ${esc(c||"")}">${esc(l)}</span>`).join("")}</div>` : ""}
       <h3>${esc(day.title)}</h3>
       ${day.where ? `<div class="where">${esc(day.where)}</div>` : ""}
-      <ul class="steps">${(day.steps||[]).map(stepHtml).join("")}</ul>
+      ${planStepsHtml(day, big)}
       ${day.alt ? `<details class="altplan"><summary>${esc(day.alt.label || "Plan B")}${day.alt.c ? claudeChip(true) : ""}</summary>${day.alt.intro ? `<p class="small muted" style="margin:6px 0 0">${esc(day.alt.intro)}</p>` : ""}<ul class="steps">${(day.alt.steps||[]).map(stepHtml).join("")}</ul></details>` : ""}
       ${day.sleep ? `<div class="sleep"><span class="chip grey">Night</span> ${esc(day.sleep)}</div>` : ""}
     </div></article>`;
 }
 const mapLink = q => q ? ` <a class="maplink" href="${mapsUrl(q)}" target="_blank" rel="noopener">📍&nbsp;Map</a>` : "";
 const claudeChip = c => c ? ' <span class="chip claude">✨ Claude</span>' : "";
-function stepHtml(st){
-  if(Array.isArray(st)) return `<li class="k-log"><span class="t">${esc(st[0])}</span><span>${esc(st[1])}</span></li>`;
-  return `<li class="k-${esc(st.k || "act")}${st.c ? " tip" : ""}"><span class="t">${esc(st.t || "")}</span><span>${st.go ? `<span class="go">${esc(st.go)}</span>` : ""}<b>${esc(st.n || "")}</b>${mapLink(st.q)}${claudeChip(st.c)}${st.d ? `<span class="sd">${esc(st.d)}</span>` : ""}</span></li>`;
+function stepHtml(st, extra){
+  extra = typeof extra === "string" ? extra : "";
+  if(Array.isArray(st)) return `<li class="k-log"><span class="t">${esc(st[0])}</span><span>${esc(st[1])}${extra}</span></li>`;
+  return `<li class="k-${esc(st.k || "act")}${st.c ? " tip" : ""}"><span class="t">${esc(st.t || "")}</span><span>${st.go ? `<span class="go">${esc(st.go)}</span>` : ""}<b>${esc(st.n || "")}</b>${mapLink(st.q)}${claudeChip(st.c)}${st.d ? `<span class="sd">${esc(st.d)}</span>` : ""}${extra}</span></li>`;
+}
+/* Eigene Änderungen am Tagesplan: ausblenden, verschieben, umsortieren, hinzufügen */
+const planEditing = new Set();
+const slugK = s => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,48);
+const shortDay = iso => { const d = new Date(iso + "T12:00:00"); return d.getDate() + " " + MONTHS[d.getMonth()]; };
+function planItems(day){
+  const E = state.planEdit || {}, out = [];
+  DAYS.forEach(dd => { const seen = {};
+    (dd.steps || []).forEach((st, i) => {
+      const nm = Array.isArray(st) ? st[1] : st.n; let base = "s" + dd.date.replace(/-/g,"") + "-" + slugK(nm);
+      seen[base] = (seen[base] || 0) + 1; const key = seen[base] > 1 ? base + "-" + seen[base] : base;
+      const e = E[key] || {}; const date = e.to || dd.date;
+      if(date !== day.date) return;
+      out.push({ st, key, own:false, hide: !!e.hide, ord: e.ord ?? (e.to && e.to !== dd.date ? 1000 + i : i * 10), from: e.to && e.to !== dd.date ? dd.date : "" });
+    });
+  });
+  (state.planAdd || []).filter(a => a.date === day.date).forEach(a =>
+    out.push({ st:{ t:a.t, n:a.n, d:a.d, k:a.k || "act", q:a.q }, key:a.id, own:true, by:a.by, hide:false, ord: a.ord ?? 2000 + (a.at || 0) / 1e13 }));
+  return out.sort((a,b) => a.ord - b.ord);
+}
+function planStepsHtml(day, big){
+  const items = planItems(day), vis = items.filter(x => !x.hide), gone = items.filter(x => x.hide);
+  const editing = !big && planEditing.has(day.date);
+  const opts = DAYS.map(d => `<option value="${esc(d.date)}"${d.date === day.date ? " selected" : ""}>${esc(shortDay(d.date))}</option>`).join("");
+  const li = vis.map((x, j) => {
+    let extra = "";
+    if(x.own) extra += ` <span class="chip own">Added${nameOf(x.by) ? " by " + esc(nameOf(x.by)) : ""}</span>`;
+    if(x.from) extra += ` <span class="chip own">Moved from ${esc(shortDay(x.from))}</span>`;
+    if(editing) extra += `<span class="sedit" data-key="${esc(x.key)}" data-own="${x.own ? 1 : 0}" data-j="${j}">
+      <button type="button" data-act="up" ${j === 0 ? "disabled" : ""} aria-label="Move up">↑</button>
+      <button type="button" data-act="down" ${j === vis.length - 1 ? "disabled" : ""} aria-label="Move down">↓</button>
+      <select data-act="move" aria-label="Move to another day">${opts}</select>
+      <button type="button" data-act="del" class="sdel">Remove</button></span>`;
+    return stepHtml(x.st, extra);
+  }).join("");
+  let html = `<ul class="steps">${li}</ul>`;
+  if(editing){
+    if(gone.length) html += `<div class="small muted sgone">Removed: ${gone.map(x => `<button type="button" class="linkbtn" data-restore="${esc(x.key)}">${esc(Array.isArray(x.st) ? x.st[1] : x.st.n)} ↺</button>`).join(" · ")}</div>`;
+    html += `<form class="addstep" data-add="${esc(day.date)}">
+      <input name="n" maxlength="80" required placeholder="Add an activity, e.g. matcha at …">
+      <div class="asrow"><input name="t" type="time" aria-label="Time (optional)"><select name="k" aria-label="Type"><option value="act">Activity</option><option value="food">Food</option><option value="log">Travel & hotel</option></select></div>
+      <input name="q" maxlength="120" placeholder="Place for Google Maps (optional)">
+      <input name="d" maxlength="200" placeholder="Note (optional)">
+      <button class="btn" type="submit">Add</button></form>`;
+  }
+  return html;
+}
+async function planSet(x, patch){
+  if(x.own){ const a = (state.planAdd || []).find(p => p.id === x.key); if(!a) return; const { id, ...rest } = a; return safeWrite(() => state.db.doc("planadd/" + id).set({ ...rest, ...patch })); }
+  const cur = { ...((state.planEdit || {})[x.key] || {}) }; delete cur.by;
+  const next = { ...cur, ...patch }; Object.keys(next).forEach(k => next[k] === undefined && delete next[k]);
+  return safeWrite(() => Object.keys(next).length ? state.db.doc("planedit/" + x.key).set(next) : state.db.doc("planedit/" + x.key).delete());
+}
+function bindPlanEdit(root){
+  root.onclick = async e => {
+    const eb = e.target.closest("[data-edit]");
+    if(eb){ const d = eb.dataset.edit; planEditing.has(d) ? planEditing.delete(d) : planEditing.add(d); renderPlan(); return; }
+    const rb = e.target.closest("[data-restore]");
+    if(rb){ const day = DAYS.find(d => planItems(d).some(x => x.key === rb.dataset.restore)); const x = day && planItems(day).find(x => x.key === rb.dataset.restore); if(x) await planSet(x, { hide: undefined }); return; }
+    const b = e.target.closest(".sedit button"); if(!b) return;
+    const box = b.closest(".sedit"), date = b.closest("article.day").querySelector("[data-edit]").dataset.edit;
+    const vis = planItems({date}).filter(x => !x.hide), j = +box.dataset.j, x = vis[j];
+    if(!x) return;
+    if(b.dataset.act === "del"){
+      if(b.dataset.armed !== "1"){ b.dataset.armed = "1"; b.textContent = "Sure?"; return; }
+      if(x.own) await safeWrite(() => state.db.doc("planadd/" + x.key).delete()); else await planSet(x, { hide: true });
+      return;
+    }
+    const k = b.dataset.act === "up" ? j - 1 : j + 1, y = vis[k]; if(!y) return;
+    let ox = x.ord, oy = y.ord; if(ox === oy){ ox += (k < j ? 1 : -1); }
+    await planSet(x, { ord: oy }); await planSet(y, { ord: ox });
+  };
+  root.onchange = async e => {
+    const sel = e.target.closest('select[data-act="move"]'); if(!sel) return;
+    const box = sel.closest(".sedit"), date = sel.closest("article.day").querySelector("[data-edit]").dataset.edit;
+    const x = planItems({date}).filter(x => !x.hide)[+box.dataset.j]; if(!x || sel.value === date) return;
+    if(x.own) await planSet(x, { date: sel.value, ord: undefined });
+    else { const k = x.key, origDate = `${k.slice(1,5)}-${k.slice(5,7)}-${k.slice(7,9)}`; await planSet(x, { to: origDate === sel.value ? undefined : sel.value, ord: undefined }); }
+    sel.blur(); renderPlan();
+  };
+  root.onsubmit = async e => {
+    const f = e.target.closest("form.addstep"); if(!f) return; e.preventDefault();
+    const v = n => (f.elements[n].value || "").trim(); if(!v("n")) return;
+    const data = { date: f.dataset.add, n: v("n"), t: v("t"), k: v("k") || "act", q: v("q"), d: v("d"), at: Date.now() };
+    if(data.t){ const vis = planItems({ date: data.date }).filter(x => !x.hide);
+      const i = vis.findIndex(x => { const t = Array.isArray(x.st) ? x.st[0] : x.st.t; return /^\d\d:\d\d$/.test(t || "") && t > data.t; });
+      if(i >= 0) data.ord = i === 0 ? vis[0].ord - 10 : (vis[i-1].ord + vis[i].ord) / 2; }
+    if(document.activeElement) document.activeElement.blur();
+    await safeWrite(() => state.db.collection("planadd").add(data)); renderPlan();
+  };
 }
 const ABICON = {
   car:'<path d="M3 13l2-5h10l2 5v3h-2m-10 0H3v-3h14M6 16a1.5 1.5 0 1 0 0 .01M14 16a1.5 1.5 0 1 0 0 .01"/>',
@@ -182,6 +274,7 @@ function renderPlan(){
   }
   const dd = $("#days"); dd.className = KINDS.map(([k]) => hidden.includes(k) ? "hide-" + k : "").join(" ");
   $("#days").innerHTML = DAYS.length ? DAYS.map(d => dayCard(d,false)).join("") : '<p class="muted">No itinerary yet.</p>';
+  bindPlanEdit($("#days"));
 }
 
 /* ============ BUCHUNGEN ============ */
@@ -583,7 +676,7 @@ function route(){
 function renderCurrent(){
   const active = document.activeElement;
   // Nicht neu zeichnen, während jemand in ein Notizfeld schreibt
-  if(active && active.matches && active.matches("textarea[data-note], .addrow input, .addrow select, .costform input, .costform select, .fx input")) return;
+  if(active && active.matches && active.matches("textarea[data-note], .addrow input, .addrow select, .costform input, .costform select, .fx input, .addstep input, .addstep select, .sedit select")) return;
   ({heute:renderHeute,plan:renderPlan,buchungen:renderBuchungen,orte:renderOrte,posten:()=>{},kosten:renderKosten,yen:renderYen,orga:renderOrga,claude:renderClaude})[current]();
 }
 function renderAll(){ renderCount(); renderCurrent(); }
@@ -610,6 +703,7 @@ function rowsToState(){
   applyTrip(c("private").trip);
   state.checks = c("checks"); state.notes = c("notes"); state.uploads = c("uploads");
   state.packExtra = list("packextra"); state.todoExtra = list("todoextra");
+  state.planEdit = c("planedit"); state.planAdd = list("planadd");
   state.costs = list("kosten").sort((a,b) => (b.date||"").localeCompare(a.date||"") || (b.at||0)-(a.at||0));
   state.rates = c("settings").rates || {};
   state.wishes = list("wishes").sort((a,b) => (a.done - b.done) || (b.at||0)-(a.at||0));
