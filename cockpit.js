@@ -139,8 +139,8 @@ function dayCard(day, big){
 const mapLink = q => q ? ` <a class="maplink" href="${mapsUrl(q)}" target="_blank" rel="noopener">📍&nbsp;Map</a>` : "";
 const claudeChip = c => c ? ' <span class="chip claude">✨ Claude</span>' : "";
 function stepHtml(st){
-  if(Array.isArray(st)) return `<li><span class="t">${esc(st[0])}</span><span>${esc(st[1])}</span></li>`;
-  return `<li class="${st.c ? "tip" : ""}"><span class="t">${esc(st.t || "")}</span><span>${st.go ? `<span class="go">${esc(st.go)}</span>` : ""}<b>${esc(st.n || "")}</b>${mapLink(st.q)}${claudeChip(st.c)}${st.d ? `<span class="sd">${esc(st.d)}</span>` : ""}</span></li>`;
+  if(Array.isArray(st)) return `<li class="k-log"><span class="t">${esc(st[0])}</span><span>${esc(st[1])}</span></li>`;
+  return `<li class="k-${esc(st.k || "act")}${st.c ? " tip" : ""}"><span class="t">${esc(st.t || "")}</span><span>${st.go ? `<span class="go">${esc(st.go)}</span>` : ""}<b>${esc(st.n || "")}</b>${mapLink(st.q)}${claudeChip(st.c)}${st.d ? `<span class="sd">${esc(st.d)}</span>` : ""}</span></li>`;
 }
 function renderPlan(){
   const S = T.stops || [], ti = isoOf(today0()), si = S.findIndex(s => ti >= s.from && ti <= s.to);
@@ -148,6 +148,17 @@ function renderPlan(){
   if(rm && window.routeMapSvg) rm.innerHTML = `<div class="card"><div class="sechead"><h3>Route</h3>${T.roadTrip ? `<span class="small muted">🚗 ≈ ${esc(T.roadTrip.km)} km by car</span>` : ""}</div>
     <div class="rmwrap">${window.routeMapSvg(si >= 0 ? S[si].key : "", S.slice(0, Math.max(si,0)).map(s => s.key))}</div>
     <h3 style="margin:14px 0 4px">Getting from A to B</h3><ol class="legs">${S.filter(s => (s.legs||[]).length).map(s => `<li><span class="small muted">${esc(s.dt)}</span>${window.legHtml ? window.legHtml(s.legs) : ""}</li>`).join("")}</ol></div>`;
+  const KINDS = [["act","Activities"],["food","Food"],["log","Travel & hotel"]];
+  let hidden = []; try{ hidden = JSON.parse(localStorage.getItem("planHide-" + T.id) || "[]"); }catch(e){}
+  const fb = $("#planFilter");
+  if(fb){
+    fb.innerHTML = `<span class="small muted">Show:</span>${KINDS.map(([k,l]) => `<button type="button" class="pf pf-${k}" data-k="${k}" aria-pressed="${!hidden.includes(k)}"><i></i>${l}</button>`).join("")}`;
+    fb.onclick = e => { const b = e.target.closest("button[data-k]"); if(!b) return; const k = b.dataset.k;
+      hidden = hidden.includes(k) ? hidden.filter(x => x !== k) : hidden.concat(k);
+      try{ localStorage.setItem("planHide-" + T.id, JSON.stringify(hidden)); }catch(e){}
+      renderPlan(); };
+  }
+  const dd = $("#days"); dd.className = KINDS.map(([k]) => hidden.includes(k) ? "hide-" + k : "").join(" ");
   $("#days").innerHTML = DAYS.length ? DAYS.map(d => dayCard(d,false)).join("") : '<p class="muted">No itinerary yet.</p>';
 }
 
