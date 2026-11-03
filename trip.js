@@ -21,12 +21,12 @@ window.TRIP = {
   noSignalNote: "",
 
   people: [
-    { key: "sara", name: "Sara", img: "img/p-sara.jpg", nick: "The Photographer", bio: "Takes 1,000 photos before breakfast and inspects every hotel like a Michelin judge. Will happily walk 40 minutes for the perfect matcha or a tiny shop without a sign." },
+    { key: "sara", name: "Sara", img: "img/p-sara.jpg", nick: "The Vegan Princess", bio: "Demands a royal plant-based feast at every stop, no dashi smuggled in, and inspects every hotel like a Michelin judge. Will happily walk 40 minutes for the perfect matcha or a tiny shop without a sign." },
     { key: "ugo",  name: "Ugo",  img: "img/p-ugo.jpg",  nick: "Player One", bio: "Sara's best friend. Has clocked more hours on his Nintendo Switch than at his actual job and treats Japan as the final level. May need to be dragged out of every arcade." },
-    { key: "theo", name: "Theo", img: "img/p-theo.jpg?v=5", nick: "Croissant Hunter", bio: "Ugo's brother and just as Japan-obsessed. Flew 9,000 km to the land of ramen and sushi to find… the perfect croissant. Kyushu's bakeries have been warned." }
+    { key: "theo", name: "Theo", img: "img/p-theo.jpg?v=5", nick: "Croissant Hunter", bio: "Is just as Japan-obsessed as the others. Flew 9,000 km to the land of ramen and sushi to find… the perfect croissant. Can't fall asleep without a Japanese crêpe and, though he's part of the gang, always sneaks off to do his own thing." }
   ],
 
-  features: { blog: true, costs: true, wishes: true },
+  features: { blog: true, costs: false, wishes: true },
 
   baseCurrency: "EUR",
   currencies: ["EUR", "JPY"],
@@ -34,7 +34,7 @@ window.TRIP = {
 
   // "to" = last night in this place. "legs" = how you get here (approximate; min = minutes for the bar)
   stops: [
-    { nm: "Getting there", ds: "Flight to Japan", from: "2026-12-27", to: "2026-12-27", dt: "27–28 Dec", legs: [{ mode: "plane", from: "Berlin", to: "Osaka", who: "Sara", text: "via Helsinki, lands 28 Dec 12:50 · Ugo & Theo fly in separately" }] },
+    { nm: "Getting there", ds: "Flight to Japan", from: "2026-12-27", to: "2026-12-27", dt: "27–28 Dec", legs: [{ mode: "plane", date: "2026-12-27", from: "Berlin", to: "Osaka", who: "Sara", text: "via Helsinki, lands 28 Dec 12:50 · Ugo & Theo fly in separately" }] },
     { nm: "Osaka", ds: "Reunion, waterfalls, temples and street food", from: "2026-12-28", to: "2026-12-29", dt: "28–30 Dec", key: "osa", legs: [] },
     { nm: "Fukuoka", ds: "Itoshima torii, yatai and New Year's Eve", from: "2026-12-30", to: "2026-12-31", dt: "30 Dec – 1 Jan", key: "fuk", legs: [{ mode: "train", from: "Osaka", to: "Fukuoka", min: 150, km: 620, who: "Sara", text: "Shinkansen" }, { mode: "ferry", from: "Osaka", to: "Kyushu", who: "Ugo & Theo", text: "Overnight ferry" }] },
     { nm: "Beppu", ds: "Road trip starts: Yufuin, hells and onsen hopping", from: "2027-01-01", to: "2027-01-02", dt: "1–3 Jan", key: "bep", legs: [{ mode: "car", from: "Fukuoka", to: "Beppu", min: 135, km: 140, text: "Via Yufuin · pick up the rental car first" }] },
@@ -45,7 +45,7 @@ window.TRIP = {
     { nm: "Nagasaki", ds: "Chinatown, night views and Huis Ten Bosch", from: "2027-01-09", to: "2027-01-10", dt: "9–11 Jan", key: "nag", legs: [{ mode: "car", from: "Unzen", to: "Nagasaki", min: 80, km: 60 }] },
     { nm: "Ureshino", ds: "Inari shrine, porcelain villages and tea fields", from: "2027-01-11", to: "2027-01-12", dt: "11–13 Jan", key: "ure", legs: [{ mode: "car", from: "Nagasaki", to: "Ureshino", min: 180, km: 155, text: "Via Yūtoku Inari, Okawachiyama and Arita" }] },
     { nm: "Osaka", ds: "Universal Studios and last days in the city", from: "2027-01-13", to: "2027-01-16", dt: "13–16 Jan", key: "osa", legs: [{ mode: "car", from: "Ureshino", to: "Fukuoka", min: 210, km: 220, who: "All three", text: "Via Hamanoura and Tanushimaru · return the rental car" }, { mode: "train", from: "Fukuoka", to: "Osaka", min: 150, km: 620, who: "Sara", text: "Shinkansen · Ugo & Theo follow on 14 Jan" }] },
-    { nm: "Home", ds: "Flight home", from: "2027-01-17", to: "2099-12-31", dt: "16–17 Jan", legs: [{ mode: "plane", from: "Osaka", to: "Berlin", who: "Sara", text: "KIX 23:25 via Helsinki, lands 17 Jan 08:00" }] }
+    { nm: "Home", ds: "Flight home", from: "2027-01-17", to: "2099-12-31", dt: "16–17 Jan", legs: [{ mode: "plane", date: "2027-01-16", from: "Osaka", to: "Berlin", who: "Sara", text: "KIX 23:25 via Helsinki, lands 17 Jan 08:00" }] }
   ],
   roadTrip: { km: "1,600", note: "incl. day trips, by rental car 1–13 Jan" },
   places: ["On the road", "Osaka", "Fukuoka", "Beppu", "Miyazaki", "Kirishima", "Kumamoto", "Unzen", "Nagasaki", "Ureshino", "Home"],

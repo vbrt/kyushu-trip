@@ -14,7 +14,7 @@ const BASE = T.baseCurrency || "EUR";
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const WDAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 // Private Reisedaten kommen aus der Datenbank (Dokument private/trip)
-let DAYS = [], FLIGHTS = [], STAYS = [], TRANSFERS = [], TODOS = [], PACK = [], GUIDES = {}, QUICK = [], ALERTS = [], MONEY = [], EMERGENCY = [], FACTS = [], EMAILS = {};
+let DAYS = [], FLIGHTS = [], STAYS = [], TRANSFERS = [], TODOS = [], PACK = [], PACKTIPS = [], GUIDES = {}, QUICK = [], ALERTS = [], MONEY = [], EMERGENCY = [], FACTS = [], EMAILS = {};
 
 /* ============ HELFER ============ */
 const $ = s => document.querySelector(s);
@@ -61,7 +61,7 @@ function openTodos(){
 }
 function packStats(){
   let total=0, done=0;
-  PACK.forEach(c => c.items.forEach((_,i) => { total++; if(state.checks[`pack-${slug(c.cat)}-${i}`]?.done) done++; }));
+  PACK.filter(c => !c.info).forEach(c => c.items.forEach((_,i) => { total++; if(state.checks[`pack-${slug(c.cat)}-${i}`]?.done) done++; }));
   state.packExtra.forEach(p => { total++; if(state.checks["pack-x-"+p.id]?.done) done++; });
   return {total,done};
 }
@@ -142,12 +142,32 @@ function stepHtml(st){
   if(Array.isArray(st)) return `<li class="k-log"><span class="t">${esc(st[0])}</span><span>${esc(st[1])}</span></li>`;
   return `<li class="k-${esc(st.k || "act")}${st.c ? " tip" : ""}"><span class="t">${esc(st.t || "")}</span><span>${st.go ? `<span class="go">${esc(st.go)}</span>` : ""}<b>${esc(st.n || "")}</b>${mapLink(st.q)}${claudeChip(st.c)}${st.d ? `<span class="sd">${esc(st.d)}</span>` : ""}</span></li>`;
 }
+const ABICON = {
+  car:'<path d="M3 13l2-5h10l2 5v3h-2m-10 0H3v-3h14M6 16a1.5 1.5 0 1 0 0 .01M14 16a1.5 1.5 0 1 0 0 .01"/>',
+  train:'<path d="M6 3h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM4 9h12M7 15l-2 3m10-3 2 3"/>',
+  ferry:'<path d="M3 15c2 1.5 4 1.5 7 0s5-1.5 7 0M5 13l-1-4h12l-1 4M7 9V6h6v3"/>',
+  plane:'<path d="M2 11l16-6-5 12-3-5-8-1zm8 1 3-3"/>'
+};
+const fmtDay = iso => { const d = new Date(iso + "T12:00:00"); return d.getDate() + " " + d.toLocaleString("en-GB",{month:"short"}); };
+const fmtDur = m => m >= 60 ? Math.floor(m/60) + " h" + (m % 60 ? " " + (m % 60) : "") : m + " min";
+function abHtml(S){
+  const rows = [];
+  S.forEach(s => (s.legs||[]).forEach(l => rows.push({...l, date: l.date || s.from})));
+  return `<ol class="ab">${rows.map(l => {
+    const meta = l.min ? fmtDur(l.min) : "";
+    const note = [l.km ? "≈ " + l.km + " km" : "", l.text || ""].filter(Boolean).join(" · ");
+    const ic = `<svg class="abi" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-label="${esc(l.mode)}">${ABICON[l.mode] || ""}</svg>`;
+    const line = `<span class="abd">${esc(fmtDay(l.date))}</span>${ic}<span class="abt"><span>${esc(l.from || "")} → ${esc(l.to || "")}</span>${l.who ? `<span class="abw">${esc(l.who)}</span>` : ""}</span><span class="abm">${esc(meta)}</span>`;
+    const cls = l.mode === "car" && l.min >= 240 ? ' class="long"' : "";
+    return note.trim() ? `<li${cls}><details><summary>${line}</summary><div class="abn">${esc(note)}</div></details></li>` : `<li${cls}><div class="abrow">${line}</div></li>`;
+  }).join("")}</ol>`;
+}
 function renderPlan(){
   const S = T.stops || [], ti = isoOf(today0()), si = S.findIndex(s => ti >= s.from && ti <= s.to);
   const rm = $("#routeOverview");
   if(rm && window.routeMapSvg) rm.innerHTML = `<div class="card"><div class="sechead"><h3>Route</h3>${T.roadTrip ? `<span class="small muted">🚗 ≈ ${esc(T.roadTrip.km)} km by car</span>` : ""}</div>
     <div class="rmwrap">${window.routeMapSvg(si >= 0 ? S[si].key : "", S.slice(0, Math.max(si,0)).map(s => s.key))}</div>
-    <h3 style="margin:14px 0 4px">Getting from A to B</h3><ol class="legs">${S.filter(s => (s.legs||[]).length).map(s => `<li><span class="small muted">${esc(s.dt)}</span>${window.legHtml ? window.legHtml(s.legs) : ""}</li>`).join("")}</ol></div>`;
+    <h3 style="margin:14px 0 2px">Getting from A to B</h3><p class="small muted" style="margin:0">Tap a line for details.</p>${abHtml(S)}</div>`;
   const KINDS = [["act","Activities"],["food","Food"],["log","Travel & hotel"]];
   let hidden = []; try{ hidden = JSON.parse(localStorage.getItem("planHide-" + T.id) || "[]"); }catch(e){}
   const fb = $("#planFilter");
@@ -266,7 +286,8 @@ function renderOrga(){
   const v = $("#v-orga");
   const todos = openTodos().sort((a,b) => (a.done - b.done) || a.due.localeCompare(b.due));
   const shown = todoMode === "open" ? todos.filter(t => !t.done) : todos;
-  const emergency = [...(T.emergency||[]), ...EMERGENCY], facts = [...(T.goodToKnow||[]), ...FACTS];
+  const uniq = a => a.filter((x,i) => a.findIndex(y => JSON.stringify(y) === JSON.stringify(x)) === i);
+  const emergency = uniq([...(T.emergency||[]), ...EMERGENCY]), facts = uniq([...(T.goodToKnow||[]), ...FACTS]);
   const ps = packStats();
   v.innerHTML = `<div class="sechead"><h2>Prep</h2><span class="small muted">${PLURAL ? "Everyone in the group sees the ticks" : "Everything is saved"}</span></div>
   <div class="card">
@@ -278,7 +299,8 @@ function renderOrga(){
   <div class="card">
     <div class="sechead"><h3>Packing list</h3><span class="small muted">${ps.done} of ${ps.total} packed</span></div>
     <div class="bar" style="margin-bottom:12px"><i style="width:${Math.round(ps.done/Math.max(ps.total,1)*100)}%"></i></div>
-    <div class="grid2">${PACK.map(c => {
+    ${PACKTIPS.length ? `<ul class="dots small" style="margin:0 0 12px">${PACKTIPS.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+    <div class="grid2">${PACK.filter(c => !c.info).map(c => {
       const extra = state.packExtra.filter(p => p.cat === c.cat);
       const ids = c.items.map((_,i) => `pack-${slug(c.cat)}-${i}`).concat(extra.map(p => "pack-x-"+p.id));
       const d = ids.filter(id => state.checks[id]?.done).length;
@@ -286,11 +308,12 @@ function renderOrga(){
         ${c.items.map((it,i) => packRow(`pack-${slug(c.cat)}-${i}`, it)).join("")}
         ${extra.map(p => packRow("pack-x-"+p.id, p.text, p.id)).join("")}</div>`;
     }).join("")}</div>
-    ${state.canWrite ? `<form class="addrow" id="addPack"><input id="packText" placeholder="Missing something? e.g. playing cards" maxlength="80" required><select id="packCat" aria-label="Category">${PACK.map(c => `<option>${esc(c.cat)}</option>`).join("")}</select><button class="btn" type="submit">Add</button></form>` : ""}
+    ${PACK.some(c => c.info) ? `<div class="grid2" style="margin-top:12px">${PACK.filter(c => c.info).map(c => `<div class="packcat info"><h3>${esc(c.cat)}</h3><ul class="dots small">${c.items.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`).join("")}</div>` : ""}
+    ${state.canWrite ? `<form class="addrow" id="addPack"><input id="packText" placeholder="Missing something? e.g. playing cards" maxlength="80" required><select id="packCat" aria-label="Category">${PACK.filter(c => !c.info).map(c => `<option>${esc(c.cat)}</option>`).join("")}</select><button class="btn" type="submit">Add</button></form>` : ""}
   </div>
   <div class="grid2">
     <div class="card hl"><h3>Money</h3>
-      ${MONEY.length ? `<ul class="dots">${MONEY.map(m => `<li>${esc(m)}</li>`).join("")}</ul>` : ""}
+      <p class="small muted" style="margin:0 0 6px">Converter and money tips: <a href="#yen">¥ ↔ €</a></p>
       ${noteBox("geld","Exchange rates, cash withdrawn, notes …")}
     </div>
     <div class="card crit"><h3>Emergency</h3>
@@ -490,8 +513,62 @@ function bindCopy(root){
 }
 function showBanner(t){ const b = $("#banner"); b.textContent = t; b.hidden = false; }
 
+/* ============ ¥ ↔ € ============ */
+const FX_KEY = "fx-" + (window.TRIP||{}).id;
+function fxLoad(){ try{ return JSON.parse(localStorage.getItem(FX_KEY) || "null"); }catch(e){ return null; } }
+function fxSave(o){ try{ localStorage.setItem(FX_KEY, JSON.stringify(o)); }catch(e){} }
+let fxBusy = false;
+async function fxFetch(){
+  if(fxBusy) return; fxBusy = true;
+  const urls = ["https://api.frankfurter.dev/v1/latest?base=EUR&symbols=JPY","https://api.frankfurter.app/latest?from=EUR&to=JPY"];
+  for(const u of urls){
+    try{
+      const r = await fetch(u, {cache:"no-store"}); if(!r.ok) continue;
+      const j = await r.json(); const rate = j && j.rates && +j.rates.JPY;
+      if(rate > 0){ const cur = fxLoad() || {}; fxSave({...cur, rate, date: j.date, at: Date.now()}); break; }
+    }catch(e){}
+  }
+  fxBusy = false; if(current === "yen") renderYen();
+}
+function renderYen(){
+  const v = $("#v-yen"); const st = fxLoad() || {};
+  const manual = st.manual > 0 ? st.manual : 0;
+  const rate = manual || st.rate || 0;
+  if(!st.rate && !fxBusy && navigator.onLine) fxFetch();
+  else if(st.at && Date.now() - st.at > 6*3600e3 && navigator.onLine && !fxBusy) fxFetch();
+  const jpy = +(v.dataset.jpy || 1000);
+  const fmtE = n => n.toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtY = n => Math.round(n).toLocaleString("en-GB");
+  const src = manual ? "your own rate" : st.date ? `ECB rate of ${esc(fmtDay(st.date))}` + (navigator.onLine ? "" : " · offline, last saved") : (navigator.onLine ? "loading rate …" : "offline · set a rate below");
+  v.innerHTML = `<div class="card"><div class="sechead"><h3>Yen ↔ Euro</h3><span class="small muted">${rate ? `€1 = ¥${rate.toFixed(1)}` : ""}</span></div>
+    <div class="fx">
+      <div class="fx-row"><input id="fxY" inputmode="decimal" aria-label="Yen" value="${rate ? fmtY(jpy) : ""}"><label for="fxY">¥</label></div>
+      <span class="fx-swap">⇅</span>
+      <div class="fx-row"><input id="fxE" inputmode="decimal" aria-label="Euro" value="${rate ? fmtE(jpy/rate) : ""}"><label for="fxE">€</label></div>
+    </div>
+    <p class="small muted" style="margin:10px 0 0">${src}. Cards and ATMs charge their own rate, so expect a little extra.</p>
+  </div>
+  ${rate ? `<div class="card"><h3>Cheat sheet</h3><table class="fx-tbl">${[100,500,1000,2000,5000,10000,20000,50000].map(y => `<tr data-y="${y}"><td>¥${fmtY(y)}</td><td>€${fmtE(y/rate)}</td></tr>`).join("")}</table>
+    <p class="small muted" style="margin:8px 0 0">Rule of thumb: ¥1,000 ≈ €${(1000/rate).toFixed(2)}.</p></div>` : ""}
+  ${MONEY.length ? `<div class="card"><h3>Money tips</h3><ul class="dots">${MONEY.map(m => `<li>${esc(m)}</li>`).join("")}</ul></div>` : ""}
+  <details class="card"><summary><b>Use my own rate</b> <span class="small muted">· e.g. what your card actually charged</span></summary>
+    <div class="addrow" style="margin-top:10px"><input id="fxM" inputmode="decimal" placeholder="Yen per €1, e.g. 162" value="${manual || ""}"><button class="btn" type="button" id="fxMs">Save</button>${manual ? `<button class="btn ghost" type="button" id="fxMr">Back to ECB rate</button>` : ""}</div>
+  </details>`;
+  const num = s => +String(s).replace(/[^\d.,]/g,"").replace(/,/g,"");
+  const y = $("#fxY"), e = $("#fxE");
+  if(rate){
+    y.addEventListener("input", () => { const n = num(y.value); v.dataset.jpy = n || 0; e.value = n ? fmtE(n/rate) : ""; });
+    e.addEventListener("input", () => { const n = num(e.value.replace(/,/g,"")); v.dataset.jpy = n*rate || 0; y.value = n ? fmtY(n*rate) : ""; });
+    [y,e].forEach(i => i.addEventListener("focus", () => i.select()));
+  }
+  v.querySelectorAll("tr[data-y]").forEach(b => b.addEventListener("click", () => { v.dataset.jpy = b.dataset.y; renderYen(); window.scrollTo({top:0,behavior:"smooth"}); }));
+  $("#fxMs").addEventListener("click", () => { const n = num($("#fxM").value); fxSave({...fxLoad(), manual: n > 0 ? n : 0}); renderYen(); });
+  const r = $("#fxMr"); if(r) r.addEventListener("click", () => { fxSave({...fxLoad(), manual: 0}); renderYen(); });
+}
+window.addEventListener("online", () => { if(current === "yen") fxFetch(); });
+
 /* ============ ROUTING ============ */
-const VIEWS = ["heute","plan","buchungen","orte","posten","kosten","orga","claude"];
+const VIEWS = ["heute","plan","buchungen","orte","posten","kosten","yen","orga","claude"];
 let current = "heute";
 function route(){
   const h = location.hash.replace("#","");
@@ -504,8 +581,8 @@ function route(){
 function renderCurrent(){
   const active = document.activeElement;
   // Nicht neu zeichnen, während jemand in ein Notizfeld schreibt
-  if(active && active.matches && active.matches("textarea[data-note], .addrow input, .addrow select, .costform input, .costform select")) return;
-  ({heute:renderHeute,plan:renderPlan,buchungen:renderBuchungen,orte:renderOrte,posten:()=>{},kosten:renderKosten,orga:renderOrga,claude:renderClaude})[current]();
+  if(active && active.matches && active.matches("textarea[data-note], .addrow input, .addrow select, .costform input, .costform select, .fx input")) return;
+  ({heute:renderHeute,plan:renderPlan,buchungen:renderBuchungen,orte:renderOrte,posten:()=>{},kosten:renderKosten,yen:renderYen,orga:renderOrga,claude:renderClaude})[current]();
 }
 function renderAll(){ renderCount(); renderCurrent(); }
 window.addEventListener("hashchange", () => { route(); window.scrollTo(0,0); });
@@ -521,7 +598,7 @@ let signedAt = Date.now();
 function applyTrip(t){
   if(!t) return;
   DAYS = (t.days || []).slice().sort((a,b) => (a.date||"").localeCompare(b.date||"")); FLIGHTS = t.flights || []; STAYS = t.stays || []; TRANSFERS = t.transfers || [];
-  TODOS = t.todos || []; PACK = t.pack || []; GUIDES = t.guides || {}; QUICK = t.quick || []; ALERTS = t.alerts || [];
+  TODOS = t.todos || []; PACK = t.pack || []; PACKTIPS = t.packTips || []; GUIDES = t.guides || {}; QUICK = t.quick || []; ALERTS = t.alerts || [];
   MONEY = t.money || []; EMERGENCY = t.emergency || []; FACTS = t.facts || [];
   EMAILS = Object.fromEntries(Object.entries(t.emails || {}).map(([e,k]) => [e.toLowerCase(), k]));
 }
