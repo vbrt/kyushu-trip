@@ -14,7 +14,7 @@ window.ROUTE_GEO = {"w":360,"h":400,"land":"M160.6,405L161.9,403.9L164.4,395L163
     [["fuk","yuf","bep"],"car"], [["bep","usu","tak","miy"],"car"], [["miy","aya","aos","udo","kir"],"car"],
     [["kir","ibu"],"trip"], [["kir","yat","kura","uto","kum"],"car"], [["kum","aso"],"trip"],
     [["kum","kport"],"car"], [["kport","sport"],"ferry"], [["sport","oba","unz"],"car"], [["unz","nag"],"car"],
-    [["nag","yut","ari","oka","ure"],"car"], [["ure","htb"],"trip"], [["ure","ham","fuk"],"car"]
+    [["nag","yut","ari","oka","ure"],"car"], [["nag","htb"],"trip"], [["ure","ham","fuk"],"car"]
   ];
   window.routeMapSvg = function(curKey, doneKeys){
     const done = new Set(doneKeys || []);
