@@ -165,7 +165,7 @@ function slotBox(slot, label, slotOwner, doc){
   const thumbs = files.map(f => {
     const url = esc(blobUrl(f.id));
     const isImg = (f.type||"").startsWith("image/");
-    return `<a href="${url}" target="_blank" rel="noopener" title="${esc(f.name)}">${isImg ? `<img src="${url}" alt="${esc(f.name)}" loading="lazy">` : `<span class="pdf">PDF</span>`}</a>`;
+    return `<span class="sb-file"><a href="${url}" target="_blank" rel="noopener" title="${esc(f.name)}">${isImg ? `<img src="${url}" alt="${esc(f.name)}" loading="lazy">` : `<span class="pdf">PDF</span>`}</a>${state.canWrite ? `<button type="button" class="sb-del" data-delfile="${esc(slot)}" data-fid="${esc(f.id)}" aria-label="Remove ${esc(f.name)}">×</button>` : ""}</span>`;
   }).join("");
   const canUp = !!state.assets;
   const what = [doc ? esc(doc) : "", files.length ? `${files.length} file${files.length > 1 ? "s" : ""}` : "", noteTxt && !doc && !files.length ? "note" : ""].filter(Boolean).join(" · ");
@@ -442,6 +442,13 @@ function bindNotes(root){
   });
 }
 function bindUploads(root){
+  root.querySelectorAll("[data-delfile]").forEach(b => b.addEventListener("click", async () => {
+    if(b.dataset.armed !== "1"){ b.dataset.armed = "1"; b.textContent = "Remove?"; b.classList.add("armed"); return; }
+    const slot = b.dataset.delfile, fid = b.dataset.fid;
+    const left = (state.uploads[slot]?.files || []).filter(f => f.id !== fid);
+    const ok = await safeWrite(() => left.length ? state.db.doc("uploads/" + slot).set({files: left, by: state.me, at: Date.now()}) : state.db.doc("uploads/" + slot).delete());
+    if(ok && !left.some(f => f.id === fid)){ try{ await SBC.storage.from("private").remove([fid]); }catch(e){ console.warn(e); } }
+  }));
   root.querySelectorAll("input[data-upload]").forEach(inp => inp.addEventListener("change", async () => {
     const slot = inp.dataset.upload;
     const st = root.querySelector(`[data-upstatus="${CSS.escape(slot)}"]`);

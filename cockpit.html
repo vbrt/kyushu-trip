@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&amp;family=Source+Sans+3:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=10">
+<link rel="stylesheet" href="style.css?v=11">
 <style>
 :root{
   /* Layout: Kopf mit Countdown, Tab-Leiste wie Wegweiser, darunter je Bereich Karten in einer Spalte (max 860px) */
@@ -80,7 +80,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 /* Kopf */
 header.top{color:#eef3f4;background:#111a20;padding:0 0 18px}
-.heroimg{height:240px;background:#16212a url("img/cockpit-hero.jpg?v=10") center 45%/cover no-repeat;position:relative;margin-bottom:16px}
+.heroimg{height:240px;background:#16212a url("img/cockpit-hero.jpg?v=11") center 45%/cover no-repeat;position:relative;margin-bottom:16px}
 .heroimg::after{content:"";position:absolute;inset:auto 0 0 0;height:70px;background:linear-gradient(180deg,rgba(17,26,32,0),#111a20)}
 @media (max-width:700px){.heroimg{height:43vw;background-position:center center}}
 @media (display-mode: standalone) and (max-width:700px){header.top .heroimg{height:calc(43vw + env(safe-area-inset-top));background-position:center bottom}}
@@ -280,6 +280,9 @@ footer{padding:20px 0 40px;font-size:.8rem;color:var(--muted)}
 .sb-thumbs a{display:block;width:44px;height:44px;border-radius:6px;overflow:hidden;border:1px solid var(--line);font-size:.65rem;color:var(--muted);text-decoration:none}
 .sb-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
 .sb-thumbs .pdf{display:flex;align-items:center;justify-content:center;height:100%;color:var(--accent);font-weight:700}
+.sb-file{position:relative;display:inline-block}
+.sb-del{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:.8rem;line-height:1;padding:0 5px;cursor:pointer}
+.sb-del.armed{background:var(--crit);color:#fff;border-color:var(--crit);font-size:.7rem}
 .sb-note summary{font-size:.78rem;color:var(--muted);cursor:pointer}
 .sb-note .note{margin-top:6px}
 .slot.compact{padding:8px 10px}
@@ -350,12 +353,12 @@ footer{padding:20px 0 40px;font-size:.8rem;color:var(--muted)}
 <footer class="wrap">All times are local time.</footer>
 
 <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Photo"><button type="button" id="lbClose">Close</button><img id="lbImg" alt=""></div>
-<script src="cockpit-flags.js?v=10"></script>
+<script src="cockpit-flags.js?v=11"></script>
 <script src="vendor/supabase.js?v=2.45.4"></script>
-<script src="config.js?v=10"></script>
-<script src="trip.js?v=10"></script>
-<script src="route-map.js?v=10"></script>
-<script src="app.js?v=10"></script>
-<script src="cockpit.js?v=10"></script>
+<script src="config.js?v=11"></script>
+<script src="trip.js?v=11"></script>
+<script src="route-map.js?v=11"></script>
+<script src="app.js?v=11"></script>
+<script src="cockpit.js?v=11"></script>
 </body>
 </html>
