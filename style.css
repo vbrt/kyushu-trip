@@ -196,3 +196,11 @@ ol.legs{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
 .rm-wp text{font:500 9px var(--body,system-ui);fill:var(--muted);paint-order:stroke;stroke:var(--surface);stroke-width:2.5px;stroke-linejoin:round}
 .rm-legend i.trip{border-top:2px dotted var(--trail)}
 .leg-d{font-weight:400;color:var(--muted)}
+
+/* Dunkelmodus: System oder Schalter */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1418; --surface:#162027; --ink:#e4eaed; --muted:#93a2ab; --line:#26333c; --accent:#8ea9ec; --accent-soft:#1b2540; --trail:#ff7d5e; --ok:#6cc488; --ok-soft:#173022; --crit:#ef7d70; color-scheme:dark;}}
+:root[data-theme="dark"]{--bg:#0e1418; --surface:#162027; --ink:#e4eaed; --muted:#93a2ab; --line:#26333c; --accent:#8ea9ec; --accent-soft:#1b2540; --trail:#ff7d5e; --ok:#6cc488; --ok-soft:#173022; --crit:#ef7d70; color-scheme:dark;}
+:root[data-theme="light"]{color-scheme:light}
+.themebtn{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;z-index:15;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(8,14,18,.45);color:#fff;font-size:1.1rem;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.themebtn:active{transform:scale(.94)}
+@media print{.themebtn{display:none}}
