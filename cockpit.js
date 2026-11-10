@@ -157,7 +157,7 @@ function planItems(day){
       seen[base] = (seen[base] || 0) + 1; const key = seen[base] > 1 ? base + "-" + seen[base] : base;
       const e = E[key] || {}; const date = e.to || dd.date;
       if(date !== day.date) return;
-      out.push({ st, key, own:false, hide: !!e.hide, ord: e.ord ?? (e.to && e.to !== dd.date ? 1000 + i : i * 10), from: e.to && e.to !== dd.date ? dd.date : "" });
+      out.push({ st, key, own:false, grp: (Array.isArray(st) ? "" : st.grp) || "", hide: !!e.hide, ord: e.ord ?? (e.to && e.to !== dd.date ? 1000 + i : i * 10), from: e.to && e.to !== dd.date ? dd.date : "" });
     });
   });
   (state.planAdd || []).filter(a => a.date === day.date).forEach(a =>
@@ -177,9 +177,14 @@ function planStepsHtml(day, big){
       <button type="button" data-act="down" ${j === vis.length - 1 ? "disabled" : ""} aria-label="Move down">↓</button>
       <select data-act="move" aria-label="Move to another day">${opts}</select>
       <button type="button" data-act="del" class="sdel">Remove</button></span>`;
-    return stepHtml(x.st, extra);
-  }).join("");
-  let html = `<ul class="steps">${li}</ul>`;
+    return { grp: x.grp, html: stepHtml(x.st, extra) };
+  });
+  const groups = (day.groups || []).filter(g => li.some(r => r.grp === g.id));
+  let html = `<ul class="steps">${li.filter(r => !groups.some(g => g.id === r.grp)).map(r => r.html).join("")}</ul>`;
+  groups.forEach(g => {
+    const rows = li.filter(r => r.grp === g.id);
+    html += `<details class="grp"${editing ? " open" : ""}><summary><b>${esc(g.label)}</b><span class="small muted"> · ${rows.length} ${rows.length === 1 ? "stop" : "stops"}</span></summary><ul class="steps">${rows.map(r => r.html).join("")}</ul></details>`;
+  });
   if(editing){
     if(gone.length) html += `<div class="small muted sgone">Removed: ${gone.map(x => `<button type="button" class="linkbtn" data-restore="${esc(x.key)}">${esc(Array.isArray(x.st) ? x.st[1] : x.st.n)} ↺</button>`).join(" · ")}</div>`;
     html += `<form class="addstep" data-add="${esc(day.date)}">
@@ -212,7 +217,9 @@ function bindPlanEdit(root){
       if(x.own) await safeWrite(() => state.db.doc("planadd/" + x.key).delete()); else await planSet(x, { hide: true });
       return;
     }
-    const k = b.dataset.act === "up" ? j - 1 : j + 1, y = vis[k]; if(!y) return;
+    const dir = b.dataset.act === "up" ? -1 : 1; let k = j + dir;
+    while(vis[k] && vis[k].grp !== x.grp) k += dir;
+    const y = vis[k]; if(!y) return;
     let ox = x.ord, oy = y.ord; if(ox === oy){ ox += (k < j ? 1 : -1); }
     await planSet(x, { ord: oy }); await planSet(y, { ord: ox });
   };

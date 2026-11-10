@@ -1,5 +1,5 @@
 // Service Worker: hält die Seite selbst offline verfügbar (Posts/Fotos kommen immer frisch aus der Datenbank)
-const V = "kyushu-v30";
+const V = "kyushu-v31";
 const ASSETS = ["./", "index.html", "cockpit.html", "style.css", "app.js", "trip.js", "config.js", "cockpit.js", "cockpit-flags.js", "route-map.js", "theme.js", "vendor/supabase.js?v=2.45.4", "vendor/591.supabase.js", "img/icon-192.png", "img/icon-512.png", "img/apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(V).then(c => Promise.allSettled(ASSETS.map(a => c.add(a)))).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
