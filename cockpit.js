@@ -129,6 +129,7 @@ function dayCard(day, big){
   return `<article class="day ${big ? "" : cls}" id="tag-${n}">
     <div class="datecol"><div class="d">${date.getDate()}</div><div class="m">${WDAYS[date.getDay()]} · ${MONTHS[date.getMonth()]}</div>${/^Day \d/.test(day.title || "") ? "" : `<div class="n">Day ${n}</div>`}</div>
     <div>
+      ${(day.steps||[]).some(x => x && x.ll) || (day.alt && (day.alt.steps||[]).some(x => x.ll)) ? `<button type="button" class="edbtn" data-daymap="${esc(day.date)}">🗺 Map</button>` : ""}
       ${!big && state.canWrite ? `<button type="button" class="edbtn" data-edit="${esc(day.date)}">${planEditing.has(day.date) ? "Done" : "✎ Edit"}</button>` : ""}
       ${(day.tags||[]).length ? `<div class="chips" style="margin-bottom:4px">${day.tags.map(([l,c]) => `<span class="chip ${esc(c||"")}">${esc(l)}</span>`).join("")}</div>` : ""}
       <h3>${esc(day.title)}</h3>
@@ -415,7 +416,7 @@ function renderOrga(){
   </div>
   <div class="grid2">
     <div class="card hl"><h3>Money</h3>
-      <p class="small muted" style="margin:0 0 6px">Converter and money tips: <a href="#yen">¥ ↔ €</a></p>
+      ${MONEY.length ? `<ul class="dots">${MONEY.map(m => `<li>${esc(m)}</li>`).join("")}</ul>` : ""}
       ${noteBox("geld","Exchange rates, cash withdrawn, notes …")}
     </div>
     <div class="card crit"><h3>Emergency</h3>
@@ -615,62 +616,110 @@ function bindCopy(root){
 }
 function showBanner(t){ const b = $("#banner"); b.textContent = t; b.hidden = false; }
 
-/* ============ ¥ ↔ € ============ */
-const FX_KEY = "fx-" + (window.TRIP||{}).id;
-function fxLoad(){ try{ return JSON.parse(localStorage.getItem(FX_KEY) || "null"); }catch(e){ return null; } }
-function fxSave(o){ try{ localStorage.setItem(FX_KEY, JSON.stringify(o)); }catch(e){} }
-let fxBusy = false;
-async function fxFetch(){
-  if(fxBusy) return; fxBusy = true;
-  const urls = ["https://api.frankfurter.dev/v1/latest?base=EUR&symbols=JPY","https://api.frankfurter.app/latest?from=EUR&to=JPY"];
-  for(const u of urls){
-    try{
-      const r = await fetch(u, {cache:"no-store"}); if(!r.ok) continue;
-      const j = await r.json(); const rate = j && j.rates && +j.rates.JPY;
-      if(rate > 0){ const cur = fxLoad() || {}; fxSave({...cur, rate, date: j.date, at: Date.now()}); break; }
-    }catch(e){}
-  }
-  fxBusy = false; if(current === "yen") renderYen();
+/* ============ Tageskarte ============ */
+let dayGeoP = null;
+function loadDayGeo(){
+  if(window.DAY_GEO) return Promise.resolve();
+  if(!dayGeoP) dayGeoP = new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = "day-geo.js?v=1"; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
+  return dayGeoP;
 }
-function renderYen(){
-  const v = $("#v-yen"); const st = fxLoad() || {};
-  const manual = st.manual > 0 ? st.manual : 0;
-  const rate = manual || st.rate || 0;
-  if(!st.rate && !fxBusy && navigator.onLine) fxFetch();
-  else if(st.at && Date.now() - st.at > 6*3600e3 && navigator.onLine && !fxBusy) fxFetch();
-  const jpy = +(v.dataset.jpy || 1000);
-  const fmtE = n => n.toLocaleString("en-GB",{minimumFractionDigits:2,maximumFractionDigits:2});
-  const fmtY = n => Math.round(n).toLocaleString("en-GB");
-  const src = manual ? "your own rate" : st.date ? `ECB rate of ${esc(fmtDay(st.date))}` + (navigator.onLine ? "" : " · offline, last saved") : (navigator.onLine ? "loading rate …" : "offline · set a rate below");
-  v.innerHTML = `<div class="card"><div class="sechead"><h3>Yen ↔ Euro</h3><span class="small muted">${rate ? `€1 = ¥${rate.toFixed(1)}` : ""}</span></div>
-    <div class="fx">
-      <div class="fx-row"><input id="fxY" inputmode="decimal" aria-label="Yen" value="${rate ? fmtY(jpy) : ""}"><label for="fxY">¥</label></div>
-      <span class="fx-swap">⇅</span>
-      <div class="fx-row"><input id="fxE" inputmode="decimal" aria-label="Euro" value="${rate ? fmtE(jpy/rate) : ""}"><label for="fxE">€</label></div>
-    </div>
-    <p class="small muted" style="margin:10px 0 0">${src}. Cards and ATMs charge their own rate, so expect a little extra.</p>
-  </div>
-  ${rate ? `<div class="card"><h3>Cheat sheet</h3><table class="fx-tbl">${[100,500,1000,2000,5000,10000,20000,50000].map(y => `<tr data-y="${y}"><td>¥${fmtY(y)}</td><td>€${fmtE(y/rate)}</td></tr>`).join("")}</table>
-    <p class="small muted" style="margin:8px 0 0">Rule of thumb: ¥1,000 ≈ €${(1000/rate).toFixed(2)}.</p></div>` : ""}
-  ${MONEY.length ? `<div class="card"><h3>Money tips</h3><ul class="dots">${MONEY.map(m => `<li>${esc(m)}</li>`).join("")}</ul></div>` : ""}
-  <details class="card"><summary><b>Use my own rate</b> <span class="small muted">· e.g. what your card actually charged</span></summary>
-    <div class="addrow" style="margin-top:10px"><input id="fxM" inputmode="decimal" placeholder="Yen per €1, e.g. 162" value="${manual || ""}"><button class="btn" type="button" id="fxMs">Save</button>${manual ? `<button class="btn ghost" type="button" id="fxMr">Back to ECB rate</button>` : ""}</div>
-  </details>`;
-  const num = s => +String(s).replace(/[^\d.,]/g,"").replace(/,/g,"");
-  const y = $("#fxY"), e = $("#fxE");
-  if(rate){
-    y.addEventListener("input", () => { const n = num(y.value); v.dataset.jpy = n || 0; e.value = n ? fmtE(n/rate) : ""; });
-    e.addEventListener("input", () => { const n = num(e.value.replace(/,/g,"")); v.dataset.jpy = n*rate || 0; y.value = n ? fmtY(n*rate) : ""; });
-    [y,e].forEach(i => i.addEventListener("focus", () => i.select()));
-  }
-  v.querySelectorAll("tr[data-y]").forEach(b => b.addEventListener("click", () => { v.dataset.jpy = b.dataset.y; renderYen(); window.scrollTo({top:0,behavior:"smooth"}); }));
-  $("#fxMs").addEventListener("click", () => { const n = num($("#fxM").value); fxSave({...fxLoad(), manual: n > 0 ? n : 0}); renderYen(); });
-  const r = $("#fxMr"); if(r) r.addEventListener("click", () => { fxSave({...fxLoad(), manual: 0}); renderYen(); });
+const RAD = Math.PI / 180;
+const mercY = lat => Math.log(Math.tan(Math.PI / 4 + lat * RAD / 2)) / RAD;
+const kmBetween = (a, b) => { const dLa = (b[0]-a[0])*RAD, dLo = (b[1]-a[1])*RAD; const h = Math.sin(dLa/2)**2 + Math.cos(a[0]*RAD)*Math.cos(b[0]*RAD)*Math.sin(dLo/2)**2; return 12742 * Math.asin(Math.sqrt(h)); };
+const goMode = go => !go ? "other" : /🚗/.test(go) ? "car" : /🚆|🚄|🚇|🚋/.test(go) ? "train" : /🚌/.test(go) ? "bus" : /⛴/.test(go) ? "ferry" : /🚶/.test(go) ? "walk" : "other";
+function daySequences(day, useAlt){
+  const items = useAlt ? (day.alt.steps || []).map(st => ({ st, grp:"" })) : planItems(day).filter(x => !x.hide);
+  const pts = it => ({ name: it.st.n, ll: it.st.ll, go: it.st.go || "", q: it.st.q || "" });
+  const start = day.mapStart ? { name: day.mapStart[0], ll: [day.mapStart[1], day.mapStart[2]], go:"", q: day.mapStart[0], start:true } : null;
+  const base = items.filter(x => !x.grp && x.st && x.st.ll).map(pts);
+  const seqs = [{ label:"", pts: (start ? [start] : []).concat(base) }];
+  (day.groups || []).forEach(g => {
+    const gp = items.filter(x => x.grp === g.id && x.st && x.st.ll).map(pts);
+    if(gp.length) seqs.push({ label: g.label, pts: (base.length ? [base[base.length-1]] : start ? [start] : []).concat(gp) });
+  });
+  return seqs.filter(q => q.pts.length);
 }
-window.addEventListener("online", () => { if(current === "yen") fxFetch(); });
+function dayMapSvg(seqs){
+  const all = seqs.flatMap(q => q.pts.map(p => p.ll));
+  let la0 = Math.min(...all.map(p => p[0])), la1 = Math.max(...all.map(p => p[0]));
+  let lo0 = Math.min(...all.map(p => p[1])), lo1 = Math.max(...all.map(p => p[1]));
+  const minSpan = 0.04; if(la1 - la0 < minSpan){ const c = (la0+la1)/2; la0 = c - minSpan/2; la1 = c + minSpan/2; } if(lo1 - lo0 < minSpan){ const c = (lo0+lo1)/2; lo0 = c - minSpan/2; lo1 = c + minSpan/2; }
+  let y0 = mercY(la0), y1 = mercY(la1); const padX = (lo1-lo0)*0.14 + 0.01, padY = (y1-y0)*0.14 + 0.01;
+  lo0 -= padX; lo1 += padX; y0 -= padY; y1 += padY;
+  const W = 360; let w = lo1 - lo0, h = y1 - y0;
+  const ar = Math.min(1.25, Math.max(0.62, h / w)); if(h / w < ar){ const e = (w*ar - h)/2; y0 -= e; y1 += e; h = y1 - y0; } else if(h / w > ar){ const e = (h/ar - w)/2; lo0 -= e; lo1 += e; w = lo1 - lo0; }
+  const H = Math.round(W * h / w), k = W / w;
+  const X = lo => (lo - lo0) * k, Y = la => (y1 - mercY(la)) * k;
+  let land = "";
+  (window.DAY_GEO || []).forEach(poly => {
+    let mnx = 999, mxx = -999, mny = 999, mxy = -999;
+    for(let i = 0; i < poly.length; i += 2){ const a = poly[i], b = poly[i+1]; if(a < mnx) mnx = a; if(a > mxx) mxx = a; if(b < mny) mny = b; if(b > mxy) mxy = b; }
+    if(mxx < lo0 || mnx > lo1 || mercY(mxy) < y0 || mercY(mny) > y1) return;
+    let dd = ""; for(let i = 0; i < poly.length; i += 2) dd += (i ? "L" : "M") + X(poly[i]).toFixed(1) + " " + Y(poly[i+1]).toFixed(1);
+    land += dd + "Z";
+  });
+  const cls = ["dm-a","dm-b","dm-c"];
+  let lines = "", labels = "", dots = "", n = 0; const seen = new Map(), placed = [];
+  seqs.forEach((q, qi) => {
+    for(let i = 1; i < q.pts.length; i++){
+      const a = q.pts[i-1], b = q.pts[i], md = goMode(b.go);
+      const x1 = X(a.ll[1]), y1p = Y(a.ll[0]), x2 = X(b.ll[1]), y2 = Y(b.ll[0]);
+      lines += `<line class="dm-l ${cls[qi%3]} m-${md}" x1="${x1.toFixed(1)}" y1="${y1p.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+      const km = kmBetween(a.ll, b.ll);
+      if(md === "car" && km > 3) labels += `<text class="dm-km" x="${((x1+x2)/2).toFixed(1)}" y="${((y1p+y2)/2 - 4).toFixed(1)}" text-anchor="middle">~${Math.round(km*1.3)} km</text>`;
+    }
+    q.pts.forEach(p => {
+      const key = p.ll.join(","); if(seen.has(key)) return;
+      seen.set(key, p.start ? "⌂" : String(++n));
+      let x = X(p.ll[1]), y = Y(p.ll[0]);
+      const tx = x, ty = y;
+      for(let t = 0; t < 24 && placed.some(q => Math.hypot(q[0]-x, q[1]-y) < 17); t++){ const ang = t * 2.4, r = 10 + t * 2.2; x = tx + Math.cos(ang) * r; y = ty + Math.sin(ang) * r; }
+      placed.push([x, y]);
+      if(x !== tx || y !== ty) dots += `<line class="dm-lead" x1="${tx.toFixed(1)}" y1="${ty.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/><circle class="dm-dot" cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="2.2"/>`;
+      dots += `<g class="dm-p ${p.start ? "start" : ""}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="8"/><text x="${x.toFixed(1)}" y="${(y+3.5).toFixed(1)}" text-anchor="middle">${p.start ? "⌂" : n}</text></g>`;
+    });
+  });
+  return { svg: `<svg viewBox="0 0 ${W} ${H}" class="dm-svg" role="img" aria-label="Map of the day"><rect class="dm-sea" width="${W}" height="${H}"/><path class="dm-land" d="${land}"/>${lines}${labels}${dots}</svg>`, ids: seen };
+}
+function gmapsDir(pts){
+  const enc = p => encodeURIComponent(p.q || p.name || p.ll.join(","));
+  if(pts.length < 2) return "";
+  const mid = pts.slice(1, -1).slice(0, 8).map(enc).join("|");
+  return `https://www.google.com/maps/dir/?api=1&origin=${enc(pts[0])}&destination=${enc(pts[pts.length-1])}${mid ? "&waypoints=" + mid : ""}&travelmode=driving`;
+}
+async function openDayMap(date, useAlt){
+  const day = DAYS.find(d => d.date === date); if(!day) return;
+  const box = document.createElement("div"); box.className = "dmodal"; box.innerHTML = `<div class="dmcard"><p class="muted small">Loading map …</p></div>`; document.body.appendChild(box);
+  const close = () => { box.remove(); document.removeEventListener("keydown", onKey); };
+  const onKey = e => { if(e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+  box.addEventListener("click", e => { if(e.target === box || e.target.closest("[data-dmclose]")) close(); });
+  try{ await loadDayGeo(); }catch(e){}
+  const render = alt => {
+    const seqs = daySequences(day, alt); if(!seqs.length){ box.querySelector(".dmcard").innerHTML = `<p>No places with a location on this day.</p><button class="btn" data-dmclose>Close</button>`; return; }
+    const { svg, ids } = dayMapSvg(seqs);
+    const rows = seqs.map((q, qi) => {
+      const legs = q.pts.map((p, i) => {
+        const id = ids.get(p.ll.join(","));
+        if(i === 0) return `<li><span class="dm-n ${p.start ? "start" : ""}">${esc(id)}</span><span>${esc(p.name)}${p.start ? ' <span class="small muted">· start</span>' : ""}</span></li>`;
+        const km = kmBetween(q.pts[i-1].ll, p.ll), md = goMode(p.go);
+        const how = [p.go ? p.go.replace(/^\S+\s*/, "") : "", md === "car" && km > 3 ? `~${Math.round(km*1.3)} km` : ""].filter(Boolean).join(" · ");
+        return `<li><span class="dm-n">${esc(id)}</span><span>${esc(p.name)}${how ? `<span class="small muted"> · ${esc(how)}</span>` : ""}</span></li>`;
+      }).join("");
+      const gm = gmapsDir(q.pts);
+      return `${q.label ? `<h4 class="dm-g dm-g${qi%3}">${esc(q.label)}</h4>` : ""}<ol class="dm-list">${legs}</ol>${gm ? `<a class="maplink" href="${gm}" target="_blank" rel="noopener">Open this route in Google Maps ↗</a>` : ""}`;
+    }).join("");
+    box.querySelector(".dmcard").innerHTML = `<div class="dm-head"><div><span class="small muted">${esc(shortDay(day.date))}</span><h3 style="margin:0">${esc(alt ? (day.alt.label || "Plan B") : (day.title || ""))}</h3></div><button class="edbtn" data-dmclose aria-label="Close">✕</button></div>
+      ${day.alt && (day.alt.steps||[]).some(x => x.ll) ? `<div class="pf-row dm-switch"><button type="button" class="edbtn ${alt ? "" : "on"}" data-dmalt="0">Main plan</button><button type="button" class="edbtn ${alt ? "on" : ""}" data-dmalt="1">${esc(day.alt.label || "Plan B")}</button></div>` : ""}
+      ${svg}<p class="small muted" style="margin:4px 0 8px">Straight lines between stops, distances are rough road estimates (~). Real routes in Google Maps.</p>${rows}`;
+    box.querySelectorAll("[data-dmalt]").forEach(b => b.addEventListener("click", () => render(b.dataset.dmalt === "1")));
+  };
+  render(!!useAlt);
+}
+document.addEventListener("click", e => { const b = e.target.closest("[data-daymap]"); if(b){ e.preventDefault(); openDayMap(b.dataset.daymap); } });
 
 /* ============ ROUTING ============ */
-const VIEWS = ["heute","plan","buchungen","orte","posten","kosten","yen","orga","claude"];
+const VIEWS = ["heute","plan","buchungen","orte","posten","kosten","orga","claude"];
 let current = "heute";
 function route(){
   const h = location.hash.replace("#","");
@@ -684,7 +733,7 @@ function renderCurrent(){
   const active = document.activeElement;
   // Nicht neu zeichnen, während jemand in ein Notizfeld schreibt
   if(active && active.matches && active.matches("textarea[data-note], .addrow input, .addrow select, .costform input, .costform select, .fx input, .addstep input, .addstep select, .sedit select")) return;
-  ({heute:renderHeute,plan:renderPlan,buchungen:renderBuchungen,orte:renderOrte,posten:()=>{},kosten:renderKosten,yen:renderYen,orga:renderOrga,claude:renderClaude})[current]();
+  ({heute:renderHeute,plan:renderPlan,buchungen:renderBuchungen,orte:renderOrte,posten:()=>{},kosten:renderKosten,orga:renderOrga,claude:renderClaude})[current]();
 }
 function renderAll(){ renderCount(); renderCurrent(); }
 window.addEventListener("hashchange", () => { route(); window.scrollTo(0,0); });
