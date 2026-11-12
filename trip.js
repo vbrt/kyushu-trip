@@ -44,10 +44,10 @@ window.TRIP = {
     { nm: "Unzen", ds: "Onsen with a sea view", from: "2027-01-08", to: "2027-01-08", dt: "8–9 Jan", key: "unz", legs: [{ mode: "ferry", from: "Kumamoto", to: "Unzen", min: 135, km: 45, text: "Incl. 30 min car ferry to Shimabara, stop in Obama" }] },
     { nm: "Nagasaki", ds: "Chinatown, night views and Huis Ten Bosch", from: "2027-01-09", to: "2027-01-10", dt: "9–11 Jan", key: "nag", legs: [{ mode: "car", from: "Unzen", to: "Nagasaki", min: 80, km: 60 }] },
     { nm: "Ureshino", ds: "Inari shrine, porcelain villages and tea fields", from: "2027-01-11", to: "2027-01-12", dt: "11–13 Jan", key: "ure", legs: [{ mode: "car", from: "Nagasaki", to: "Ureshino", min: 180, km: 155, text: "Via Yūtoku Inari, Okawachiyama and Arita" }] },
-    { nm: "Osaka", ds: "Universal Studios and last days in the city", from: "2027-01-13", to: "2027-01-16", dt: "13–16 Jan", key: "osa", legs: [{ mode: "car", from: "Ureshino", to: "Fukuoka", min: 210, km: 220, who: "All three", text: "Via Hamanoura and Tanushimaru · return the rental car" }, { mode: "train", from: "Fukuoka", to: "Osaka", min: 150, km: 620, who: "Sara", text: "Shinkansen · Ugo & Theo follow on 14 Jan" }] },
+    { nm: "Osaka", ds: "Universal Studios and last days in the city", from: "2027-01-13", to: "2027-01-16", dt: "13–16 Jan", key: "osa", legs: [{ mode: "car", from: "Ureshino", to: "Fukuoka", min: 210, km: 220, who: "All three", text: "Via Yame tea fields and Tanushimaru" }, { mode: "train", from: "Fukuoka", to: "Osaka", min: 150, km: 620, who: "Sara", text: "Shinkansen · Ugo & Theo follow on 14 Jan" }] },
     { nm: "Home", ds: "Flight home", from: "2027-01-17", to: "2099-12-31", dt: "16–17 Jan", legs: [{ mode: "plane", date: "2027-01-16", from: "Osaka", to: "Berlin", who: "Sara", text: "KIX 23:25 via Helsinki, lands 17 Jan 08:00" }] }
   ],
-  roadTrip: { km: "1,600", note: "incl. day trips, by rental car 1–13 Jan" },
+  roadTrip: { km: "1,600", note: "incl. day trips, by rental car 1–14 Jan" },
   places: ["On the road", "Osaka", "Fukuoka", "Beppu", "Miyazaki", "Kirishima", "Kumamoto", "Unzen", "Nagasaki", "Ureshino", "Home"],
   statuses: ["", "All good, having a great time", "Tired but happy", "Soaking in an onsen", "Full and happy", "No signal for a few hours"],
   reactions: ["❤️", "👏", "😂", "😮", "🍜"],

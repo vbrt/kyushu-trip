@@ -130,7 +130,7 @@ function dayCard(day, big){
   return `<article class="day ${big ? "" : cls}" id="tag-${n}">
     <div class="datecol"><div class="d">${date.getDate()}</div><div class="m">${WDAYS[date.getDay()]} · ${MONTHS[date.getMonth()]}</div>${/^Day \d/.test(day.title || "") ? "" : `<div class="n">Day ${n}</div>`}</div>
     <div>
-      ${(day.steps||[]).some(x => x && x.ll) || (day.alt && (day.alt.steps||[]).some(x => x.ll)) ? `<button type="button" class="edbtn" data-daymap="${esc(day.date)}">🗺 Map</button>` : ""}
+      ${day.date >= "2027-01-01" && day.date <= "2027-01-13" && ((day.steps||[]).some(x => x && x.ll) || (day.alt && (day.alt.steps||[]).some(x => x.ll))) ? `<button type="button" class="edbtn" data-daymap="${esc(day.date)}">🗺 Map</button>` : ""}
       ${!big && canPlanEdit() ? `<button type="button" class="edbtn" data-edit="${esc(day.date)}">${planEditing.has(day.date) ? "Done" : "✎ Edit"}</button>` : ""}
       ${(day.tags||[]).length ? `<div class="chips" style="margin-bottom:4px">${day.tags.map(([l,c]) => `<span class="chip ${esc(c||"")}">${esc(l)}</span>`).join("")}</div>` : ""}
       <h3>${esc(day.title)}</h3>
@@ -688,7 +688,8 @@ async function openDayMap(date){
       <div id="dmList"></div>`;
     box.querySelectorAll("[data-dmalt]").forEach(b => b.addEventListener("click", () => render(b.dataset.dmalt === "1")));
     map = L.map("dmMap", { zoomControl: true, attributionControl: true, scrollWheelZoom: false });
-    L.tileLayer(`https://{s}.basemaps.cartocdn.com/${isDark() ? "dark_all" : "rastertiles/voyager"}/{z}/{x}/{y}{r}.png`, { subdomains: "abcd", maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>' }).addTo(map);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors' }).addTo(map);
+    $("#dmMap").setAttribute("data-dark", isDark() ? "1" : "0");
     const all = seqs.flatMap(q => q.pts.map(p => p.ll));
     map.fitBounds(L.latLngBounds(all).pad(0.12), { maxZoom: 15 });
     const placed = new Set();

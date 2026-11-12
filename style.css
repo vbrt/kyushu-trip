@@ -204,3 +204,9 @@ ol.legs{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
 .themebtn{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;z-index:15;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(8,14,18,.45);color:#fff;font-size:1.1rem;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .themebtn:active{transform:scale(.94)}
 @media print{.themebtn{display:none}}
+.langbar{display:flex;flex-wrap:wrap;gap:6px;margin-top:-6px}
+.langbar button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;font:inherit;font-size:.85rem;cursor:pointer}
+.langbar button.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.post details.orig{margin:-4px 0 6px}.post details.orig summary{cursor:pointer;font-size:.8rem;color:var(--muted)}
+.post details.orig .txt{opacity:.75}
+.trnote{margin:-4px 0 6px}

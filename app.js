@@ -88,7 +88,7 @@ function render(){
       <ol class="route">${STOPS.map((s,i) => `<li class="${i < si ? "done" : i === si ? "now" : ""}"><span class="pin" aria-hidden="true"></span><div><div class="nm">${esc(s.nm)}${i === si ? '<span class="tag">We are here</span>' : ""}${s.tag && i !== si ? `<span class="tag">${esc(s.tag)}</span>` : ""}</div><div class="ds">${esc(s.ds)}</div>${legHtml(s.legs, s.from)}</div><span class="dt">${s.dt}</span></li>`).join("")}</ol>
       ${T.noSignalNote ? `<p class="small muted" style="margin:4px 0 0">${esc(T.noSignalNote)}</p>` : ""}
     </section>
-    <section aria-labelledby="h-feed" style="display:grid;gap:16px"><h2 id="h-feed">News from the road</h2>
+    <section aria-labelledby="h-feed" style="display:grid;gap:16px"><h2 id="h-feed">News from the road</h2>${S.posts.length ? langBarHtml() : ""}
       ${S.loading ? '<p class="muted">Loading …</p>' : S.posts.length ? S.posts.map(postHtml).join("") : `<div class="card empty"><h3 style="font-size:1.5rem">Coming soon</h3><p class="muted" style="margin:6px 0 0">The first photos are on their way.</p></div>`}
     </section>
     ${wxHtml(si)}
@@ -130,6 +130,56 @@ function renderStudioOnly(){
   if(S.editor) root.insertAdjacentHTML("beforeend", pwFormHtml());
   bind();
 }
+/* ============ Übersetzung der Posts (EN / DE / FR) ============ */
+const LANGS = [["orig","Original"],["en","English"],["de","Deutsch"],["fr","Français"]];
+let READ_LANG = store.get("readLang") || "orig";
+const TR = {}, TR_PENDING = new Set(); let trFail = false, trTimer = null;
+const STOP = {
+  en: "the and is are was were we with to of in it this that for on you my our at have has be very but so just day".split(" "),
+  de: "und der die das ist sind war wir mit zu von im ein eine nicht ich es auf für auch sehr aber so heute den dem".split(" "),
+  fr: "le la les et est sont était nous avec de des du un une pas je on c'est pour dans sur très mais aussi aujourd'hui au aux".split(" ")
+};
+function detectLang(t){
+  const w = (String(t).toLowerCase().match(/[a-zàâçéèêëîïôûùüÿœäöß']+/g) || []);
+  let best = "en", top = 0;
+  for(const [l, list] of Object.entries(STOP)){ const set = new Set(list); const n = w.filter(x => set.has(x)).length; if(n > top){ top = n; best = l; } }
+  return best;
+}
+function trHash(s){ let h = 5381; for(let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+function trGet(t){
+  if(!t || READ_LANG === "orig") return { text: t, state: "orig" };
+  const src = detectLang(t); if(src === READ_LANG) return { text: t, state: "orig" };
+  const k = "tr:" + READ_LANG + ":" + trHash(t);
+  if(TR[k] == null){ const c = store.get(k); if(c) TR[k] = c; }
+  if(TR[k] != null) return { text: TR[k], state: "done" };
+  if(!trFail && !TR_PENDING.has(k)){ TR_PENDING.add(k); translateText(t, src, READ_LANG).then(out => { if(out){ TR[k] = out; store.set(k, out); } else trFail = true; }).finally(() => { TR_PENDING.delete(k); clearTimeout(trTimer); trTimer = setTimeout(() => refreshFeed(), 150); }); }
+  return { text: t, state: trFail ? "fail" : "busy" };
+}
+async function translateText(t, src, tgt){
+  const parts = []; let cur = "";
+  for(const sen of String(t).split(/(?<=[.!?…\n])\s+/)){ if((cur + " " + sen).length > 450 && cur){ parts.push(cur); cur = sen; } else cur = cur ? cur + " " + sen : sen; }
+  if(cur) parts.push(cur);
+  const out = [];
+  for(const part of parts){
+    try{
+      const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(part)}&langpair=${src}|${tgt}`);
+      if(!r.ok) return null; const j = await r.json();
+      if(!j || j.responseStatus != 200 || !j.responseData) return null;
+      out.push(j.responseData.translatedText);
+    }catch(e){ return null; }
+  }
+  return out.join(" ");
+}
+function trBlock(t, cls){
+  const r = trGet(t);
+  if(r.state === "orig") return `<p class="${cls}">${esc(t)}</p>`;
+  if(r.state === "done") return `<p class="${cls}">${esc(r.text)}</p><details class="orig"><summary>Original</summary><p class="${cls}">${esc(t)}</p></details>`;
+  const gl = `https://translate.google.com/?sl=auto&tl=${READ_LANG}&op=translate&text=${encodeURIComponent(t.slice(0, 1800))}`;
+  return `<p class="${cls}">${esc(t)}</p><p class="small muted trnote">${r.state === "busy" ? "Translating …" : `Translation not available right now. <a href="${gl}" target="_blank" rel="noopener">Open in Google Translate ↗</a>`}</p>`;
+}
+const langBarHtml = () => `<div class="langbar" role="group" aria-label="Read posts in">${LANGS.map(([k, l]) => `<button type="button" class="${READ_LANG === k ? "on" : ""}" data-lang="${k}">${l}</button>`).join("")}</div>`;
+document.addEventListener("click", e => { const b = e.target.closest("[data-lang]"); if(!b) return; READ_LANG = b.dataset.lang; store.set("readLang", READ_LANG); trFail = false; refreshFeed(); });
+
 function postHtml(p){
   const who = PEOPLE[p.author] || PEOPLE[FIRST];
   const media = p.media || [];
@@ -140,14 +190,14 @@ function postHtml(p){
     <div class="by"><img src="${who.img}" alt=""><div><b>${who.name}</b><span class="small muted">${esc(p.place)} · ${esc(fmtDate(p.created_at))}</span></div>
       ${S.editor ? `<button class="btn danger" type="button" data-del="${esc(p.id)}" style="margin-left:auto">Delete</button>` : ""}</div>
     ${p.status ? `<div class="st">● ${esc(p.status)}</div>` : ""}
-    ${p.body ? `<p class="txt">${esc(p.body)}</p>` : ""}
+    ${p.body ? trBlock(p.body, "txt") : ""}
     ${n ? `<div class="media ${cls}">${media.map((m,i) => m.type && m.type.startsWith("video/")
         ? `<video src="${esc(mediaUrl(m.path))}" controls playsinline preload="none"></video>`
         : `<button type="button" data-lb="${esc(mediaUrl(m.path))}" aria-label="Show photo ${i+1} full size"><img src="${esc(mediaUrl(m.thumb || m.path))}" alt="Photo by ${who.name}, ${esc(p.place)}" loading="lazy"></button>`).join("")}</div>` : ""}
     <div class="react" role="group" aria-label="Reactions">${REACTIONS.map(e => { const mine = store.get("rx:"+p.id+":"+e); return `<button type="button" class="${mine ? "mine" : ""}" data-rx="${esc(p.id)}" data-emoji="${e}" aria-label="${e} reaction">${e} ${rx[e] ? rx[e] : ""}</button>`; }).join("")}
       ${S.editor ? `<button type="button" class="btn wa small" data-share="${esc(p.id)}" style="margin-left:auto">Share on WhatsApp</button>` : ""}</div>
     <div class="comments">
-      ${cms.map(c => `<div class="cm"><b>${esc(c.name)}</b> ${esc(c.body)} <span class="muted">${esc(new Date(c.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short"}))}</span>${S.editor ? ` <button class="btn danger" type="button" data-delc="${c.id}" style="padding:0 6px">×</button>` : ""}</div>`).join("")}
+      ${cms.map(c => `<div class="cm"><b>${esc(c.name)}</b> ${esc(trGet(c.body).text)} <span class="muted">${esc(new Date(c.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"short"}))}</span>${S.editor ? ` <button class="btn danger" type="button" data-delc="${c.id}" style="padding:0 6px">×</button>` : ""}</div>`).join("")}
       <form class="cform" data-cform="${esc(p.id)}"><input name="name" placeholder="Your name" maxlength="40" required value="${esc(store.get("cname") || "")}" aria-label="Your name"><input name="body" placeholder="Leave a nice message …" maxlength="500" required aria-label="Comment"><input name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px"><button class="btn small" type="submit">Send</button></form>
     </div>
   </article>`;
@@ -268,7 +318,7 @@ function renderOutbox(){
   el.querySelectorAll("[data-drop]").forEach(b => b.addEventListener("click", async () => { if(b.dataset.armed !== "1"){ b.dataset.armed = "1"; b.textContent = "Really discard?"; return; } await IDB.del(b.dataset.drop).catch(() => {}); outbox = outbox.filter(x => x.id !== b.dataset.drop); renderOutbox(); }));
   const sl = $("shareLast"); if(sl) sl.addEventListener("click", () => doShare(S.lastShare.files, S.lastShare.text, $("pMsg")));
 }
-function refreshFeed(){ if(MODE === "studio"){ const f = $("pText"); const keep = f ? f.value : ""; renderStudioOnly(); if($("pText")) $("pText").value = keep; return; } const f = $("h-feed"); if(!f) return; const sec = f.parentElement; sec.innerHTML = `<h2 id="h-feed">News from the road</h2>` + S.posts.map(postHtml).join(""); bind(); }
+function refreshFeed(){ if(MODE === "studio"){ const f = $("pText"); const keep = f ? f.value : ""; renderStudioOnly(); if($("pText")) $("pText").value = keep; return; } const f = $("h-feed"); if(!f) return; const sec = f.parentElement; sec.innerHTML = `<h2 id="h-feed">News from the road</h2>` + (S.posts.length ? langBarHtml() : "") + S.posts.map(postHtml).join(""); bind(); }
 async function queuePost(item){
   outbox.push(item);
   try{ await IDB.put(item); }catch(e){ outboxNote = "Note: can't store the post on this phone, keep the page open until it's done."; }
