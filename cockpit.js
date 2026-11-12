@@ -616,17 +616,19 @@ function bindCopy(root){
 }
 function showBanner(t){ const b = $("#banner"); b.textContent = t; b.hidden = false; }
 
-/* ============ Tageskarte ============ */
-let dayGeoP = null;
-function loadDayGeo(){
-  if(window.DAY_GEO) return Promise.resolve();
-  if(!dayGeoP) dayGeoP = new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = "day-geo.js?v=1"; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
-  return dayGeoP;
+/* ============ Tageskarte (Leaflet + CARTO-Kacheln + OSRM-Autorouten) ============ */
+let leafletP = null;
+function loadLeaflet(){
+  if(window.L) return Promise.resolve();
+  if(!leafletP) leafletP = new Promise((res, rej) => {
+    const css = document.createElement("link"); css.rel = "stylesheet"; css.href = "vendor/leaflet/leaflet.css"; document.head.appendChild(css);
+    const sc = document.createElement("script"); sc.src = "vendor/leaflet/leaflet.js"; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc);
+  });
+  return leafletP;
 }
-const RAD = Math.PI / 180;
-const mercY = lat => Math.log(Math.tan(Math.PI / 4 + lat * RAD / 2)) / RAD;
-const kmBetween = (a, b) => { const dLa = (b[0]-a[0])*RAD, dLo = (b[1]-a[1])*RAD; const h = Math.sin(dLa/2)**2 + Math.cos(a[0]*RAD)*Math.cos(b[0]*RAD)*Math.sin(dLo/2)**2; return 12742 * Math.asin(Math.sqrt(h)); };
 const goMode = go => !go ? "other" : /🚗/.test(go) ? "car" : /🚆|🚄|🚇|🚋/.test(go) ? "train" : /🚌/.test(go) ? "bus" : /⛴/.test(go) ? "ferry" : /🚶/.test(go) ? "walk" : "other";
+const goDur = go => (go || "").replace(/^\S+\s*/, "").replace(/^(Drive|Train|Transit|Metro|Tram|Bus|Walk|Ferry)\s*/i, "").trim();
+const fmtMin = m => m >= 60 ? `${Math.floor(m/60)} h${m % 60 ? " " + (m % 60) + " min" : ""}` : `${Math.max(1, m)} min`;
 function daySequences(day, useAlt){
   const items = useAlt ? (day.alt.steps || []).map(st => ({ st, grp:"" })) : planItems(day).filter(x => !x.hide);
   const pts = it => ({ name: it.st.n, ll: it.st.ll, go: it.st.go || "", q: it.st.q || "" });
@@ -639,47 +641,18 @@ function daySequences(day, useAlt){
   });
   return seqs.filter(q => q.pts.length);
 }
-function dayMapSvg(seqs){
-  const all = seqs.flatMap(q => q.pts.map(p => p.ll));
-  let la0 = Math.min(...all.map(p => p[0])), la1 = Math.max(...all.map(p => p[0]));
-  let lo0 = Math.min(...all.map(p => p[1])), lo1 = Math.max(...all.map(p => p[1]));
-  const minSpan = 0.04; if(la1 - la0 < minSpan){ const c = (la0+la1)/2; la0 = c - minSpan/2; la1 = c + minSpan/2; } if(lo1 - lo0 < minSpan){ const c = (lo0+lo1)/2; lo0 = c - minSpan/2; lo1 = c + minSpan/2; }
-  let y0 = mercY(la0), y1 = mercY(la1); const padX = (lo1-lo0)*0.14 + 0.01, padY = (y1-y0)*0.14 + 0.01;
-  lo0 -= padX; lo1 += padX; y0 -= padY; y1 += padY;
-  const W = 360; let w = lo1 - lo0, h = y1 - y0;
-  const ar = Math.min(1.25, Math.max(0.62, h / w)); if(h / w < ar){ const e = (w*ar - h)/2; y0 -= e; y1 += e; h = y1 - y0; } else if(h / w > ar){ const e = (h/ar - w)/2; lo0 -= e; lo1 += e; w = lo1 - lo0; }
-  const H = Math.round(W * h / w), k = W / w;
-  const X = lo => (lo - lo0) * k, Y = la => (y1 - mercY(la)) * k;
-  let land = "";
-  (window.DAY_GEO || []).forEach(poly => {
-    let mnx = 999, mxx = -999, mny = 999, mxy = -999;
-    for(let i = 0; i < poly.length; i += 2){ const a = poly[i], b = poly[i+1]; if(a < mnx) mnx = a; if(a > mxx) mxx = a; if(b < mny) mny = b; if(b > mxy) mxy = b; }
-    if(mxx < lo0 || mnx > lo1 || mercY(mxy) < y0 || mercY(mny) > y1) return;
-    let dd = ""; for(let i = 0; i < poly.length; i += 2) dd += (i ? "L" : "M") + X(poly[i]).toFixed(1) + " " + Y(poly[i+1]).toFixed(1);
-    land += dd + "Z";
-  });
-  const cls = ["dm-a","dm-b","dm-c"];
-  let lines = "", labels = "", dots = "", n = 0; const seen = new Map(), placed = [];
-  seqs.forEach((q, qi) => {
-    for(let i = 1; i < q.pts.length; i++){
-      const a = q.pts[i-1], b = q.pts[i], md = goMode(b.go);
-      const x1 = X(a.ll[1]), y1p = Y(a.ll[0]), x2 = X(b.ll[1]), y2 = Y(b.ll[0]);
-      lines += `<line class="dm-l ${cls[qi%3]} m-${md}" x1="${x1.toFixed(1)}" y1="${y1p.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
-      const km = kmBetween(a.ll, b.ll);
-      if(md === "car" && km > 3) labels += `<text class="dm-km" x="${((x1+x2)/2).toFixed(1)}" y="${((y1p+y2)/2 - 4).toFixed(1)}" text-anchor="middle">~${Math.round(km*1.3)} km</text>`;
-    }
-    q.pts.forEach(p => {
-      const key = p.ll.join(","); if(seen.has(key)) return;
-      seen.set(key, p.start ? "⌂" : String(++n));
-      let x = X(p.ll[1]), y = Y(p.ll[0]);
-      const tx = x, ty = y;
-      for(let t = 0; t < 24 && placed.some(q => Math.hypot(q[0]-x, q[1]-y) < 17); t++){ const ang = t * 2.4, r = 10 + t * 2.2; x = tx + Math.cos(ang) * r; y = ty + Math.sin(ang) * r; }
-      placed.push([x, y]);
-      if(x !== tx || y !== ty) dots += `<line class="dm-lead" x1="${tx.toFixed(1)}" y1="${ty.toFixed(1)}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/><circle class="dm-dot" cx="${tx.toFixed(1)}" cy="${ty.toFixed(1)}" r="2.2"/>`;
-      dots += `<g class="dm-p ${p.start ? "start" : ""}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="8"/><text x="${x.toFixed(1)}" y="${(y+3.5).toFixed(1)}" text-anchor="middle">${p.start ? "⌂" : n}</text></g>`;
-    });
-  });
-  return { svg: `<svg viewBox="0 0 ${W} ${H}" class="dm-svg" role="img" aria-label="Map of the day"><rect class="dm-sea" width="${W}" height="${H}"/><path class="dm-land" d="${land}"/>${lines}${labels}${dots}</svg>`, ids: seen };
+async function osrmLeg(a, b){
+  const key = "osrm:" + [a[1],a[0],b[1],b[0]].map(n => n.toFixed(4)).join(",");
+  try{ const c = localStorage.getItem(key); if(c) return JSON.parse(c); }catch(e){}
+  const url = `https://router.project-osrm.org/route/v1/driving/${a[1]},${a[0]};${b[1]},${b[0]}?overview=simplified&geometries=geojson`;
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 8000);
+  try{
+    const r = await fetch(url, { signal: ctl.signal }); clearTimeout(t); if(!r.ok) return null;
+    const j = await r.json(); const rt = j.routes && j.routes[0]; if(!rt) return null;
+    const out = { line: rt.geometry.coordinates.map(c => [c[1], c[0]]), min: Math.round(rt.duration / 60) };
+    try{ localStorage.setItem(key, JSON.stringify(out)); }catch(e){}
+    return out;
+  }catch(e){ clearTimeout(t); return null; }
 }
 function gmapsDir(pts){
   const enc = p => encodeURIComponent(p.q || p.name || p.ll.join(","));
@@ -687,34 +660,66 @@ function gmapsDir(pts){
   const mid = pts.slice(1, -1).slice(0, 8).map(enc).join("|");
   return `https://www.google.com/maps/dir/?api=1&origin=${enc(pts[0])}&destination=${enc(pts[pts.length-1])}${mid ? "&waypoints=" + mid : ""}&travelmode=driving`;
 }
-async function openDayMap(date, useAlt){
+const isDark = () => { const t = document.documentElement.getAttribute("data-theme"); return t ? t === "dark" : !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches); };
+async function openDayMap(date){
   const day = DAYS.find(d => d.date === date); if(!day) return;
   const box = document.createElement("div"); box.className = "dmodal"; box.innerHTML = `<div class="dmcard"><p class="muted small">Loading map …</p></div>`; document.body.appendChild(box);
-  const close = () => { box.remove(); document.removeEventListener("keydown", onKey); };
+  let map = null;
+  const close = () => { if(map) map.remove(); box.remove(); document.removeEventListener("keydown", onKey); };
   const onKey = e => { if(e.key === "Escape") close(); };
   document.addEventListener("keydown", onKey);
   box.addEventListener("click", e => { if(e.target === box || e.target.closest("[data-dmclose]")) close(); });
-  try{ await loadDayGeo(); }catch(e){}
-  const render = alt => {
-    const seqs = daySequences(day, alt); if(!seqs.length){ box.querySelector(".dmcard").innerHTML = `<p>No places with a location on this day.</p><button class="btn" data-dmclose>Close</button>`; return; }
-    const { svg, ids } = dayMapSvg(seqs);
-    const rows = seqs.map((q, qi) => {
-      const legs = q.pts.map((p, i) => {
-        const id = ids.get(p.ll.join(","));
-        if(i === 0) return `<li><span class="dm-n ${p.start ? "start" : ""}">${esc(id)}</span><span>${esc(p.name)}${p.start ? ' <span class="small muted">· start</span>' : ""}</span></li>`;
-        const km = kmBetween(q.pts[i-1].ll, p.ll), md = goMode(p.go);
-        const how = [p.go ? p.go.replace(/^\S+\s*/, "") : "", md === "car" && km > 3 ? `~${Math.round(km*1.3)} km` : ""].filter(Boolean).join(" · ");
-        return `<li><span class="dm-n">${esc(id)}</span><span>${esc(p.name)}${how ? `<span class="small muted"> · ${esc(how)}</span>` : ""}</span></li>`;
+  try{ await loadLeaflet(); }catch(e){ box.querySelector(".dmcard").innerHTML = `<p>The map needs an internet connection.</p><button class="btn" data-dmclose>Close</button>`; return; }
+  const COLORS = ["var(--trail)", "var(--accent)", "var(--ok)"];
+  const render = async alt => {
+    if(map){ map.remove(); map = null; }
+    const seqs = daySequences(day, alt);
+    if(!seqs.length){ box.querySelector(".dmcard").innerHTML = `<p>No places with a location on this day.</p><button class="btn" data-dmclose>Close</button>`; return; }
+    const ids = new Map(); let n = 0;
+    seqs.forEach(q => q.pts.forEach(p => { const k = p.ll.join(","); if(!ids.has(k)) ids.set(k, p.start ? "⌂" : String(++n)); }));
+    const hasAlt = day.alt && (day.alt.steps || []).some(x => x.ll);
+    box.querySelector(".dmcard").innerHTML = `<div class="dm-head"><div><span class="small muted">${esc(shortDay(day.date))}</span><h3 style="margin:0">${esc(alt ? (day.alt.label || "Plan B") : (day.title || ""))}</h3></div><button class="edbtn" data-dmclose aria-label="Close">✕</button></div>
+      ${hasAlt ? `<div class="dm-switch"><button type="button" class="edbtn ${alt ? "" : "on"}" data-dmalt="0">Main plan</button><button type="button" class="edbtn ${alt ? "on" : ""}" data-dmalt="1">${esc(day.alt.label || "Plan B")}</button></div>` : ""}
+      <div class="dm-map" id="dmMap"></div>
+      <div id="dmList"></div>`;
+    box.querySelectorAll("[data-dmalt]").forEach(b => b.addEventListener("click", () => render(b.dataset.dmalt === "1")));
+    map = L.map("dmMap", { zoomControl: true, attributionControl: true, scrollWheelZoom: false });
+    L.tileLayer(`https://{s}.basemaps.cartocdn.com/${isDark() ? "dark_all" : "rastertiles/voyager"}/{z}/{x}/{y}{r}.png`, { subdomains: "abcd", maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>' }).addTo(map);
+    const all = seqs.flatMap(q => q.pts.map(p => p.ll));
+    map.fitBounds(L.latLngBounds(all).pad(0.12), { maxZoom: 15 });
+    const placed = new Set();
+    seqs.forEach((q, qi) => q.pts.forEach(p => {
+      const k = p.ll.join(","); if(placed.has(k)) return; placed.add(k);
+      L.marker(p.ll, { icon: L.divIcon({ className: "dm-mk", html: `<span class="dm-n ${p.start ? "start" : ""}" style="--c:${COLORS[qi % 3]}">${esc(ids.get(k))}</span>`, iconSize: [24, 24], iconAnchor: [12, 12] }), title: p.name }).addTo(map);
+    }));
+    const legInfo = [], legMode = [];
+    await Promise.all(seqs.map(async (q, qi) => {
+      legInfo[qi] = []; legMode[qi] = [];
+      await Promise.all(q.pts.slice(1).map(async (b, i) => {
+        const a = q.pts[i]; let md = goMode(b.go); let line = [a.ll, b.ll], dur = goDur(b.go);
+        const carDay = day.date >= "2027-01-01" && day.date <= "2027-01-14";
+        if(md === "other" && carDay && Math.hypot(a.ll[0]-b.ll[0], (a.ll[1]-b.ll[1]) * 0.84) > 0.05) md = "car";
+        legMode[qi][i + 1] = md;
+        if(md === "car"){ const r = await osrmLeg(a.ll, b.ll); if(r){ line = r.line; if(!dur) dur = "≈ " + fmtMin(r.min); } }
+        legInfo[qi][i + 1] = dur;
+        if(!map) return;
+        const pl = L.polyline(line, { color: COLORS[qi % 3], weight: md === "car" ? 4 : 3, opacity: .9, dashArray: md === "car" ? null : md === "walk" || md === "other" ? "2 7" : "8 7", lineCap: "round" }).addTo(map);
+        if(dur && md !== "walk"){ const mid = line[Math.floor(line.length / 2)]; L.tooltip({ permanent: true, direction: "center", className: "dm-tt" }).setLatLng(mid).setContent(esc(dur.replace(/^≈\s*/, ""))).addTo(map); }
+      }));
+    }));
+    if(!map) return;
+    $("#dmList").innerHTML = `<p class="small muted" style="margin:6px 0">Car legs follow real roads, times as planned (≈ = estimate).</p>` + seqs.map((q, qi) => {
+      const rows = q.pts.map((p, i) => {
+        const how = i ? (legInfo[qi][i] || "") : "";
+        const md = i ? (legMode[qi][i] || goMode(p.go)) : "";
+        const ic = { car:"🚗", train:"🚆", bus:"🚌", ferry:"⛴️", walk:"🚶" }[md] || "";
+        return `<li><span class="dm-n ${p.start ? "start" : ""}" style="--c:${COLORS[qi % 3]}">${esc(ids.get(p.ll.join(",")))}</span><span>${esc(p.name)}${p.start ? ' <span class="small muted">· start</span>' : ""}${how ? `<span class="small muted"> · ${ic} ${esc(how)}</span>` : ""}</span></li>`;
       }).join("");
       const gm = gmapsDir(q.pts);
-      return `${q.label ? `<h4 class="dm-g dm-g${qi%3}">${esc(q.label)}</h4>` : ""}<ol class="dm-list">${legs}</ol>${gm ? `<a class="maplink" href="${gm}" target="_blank" rel="noopener">Open this route in Google Maps ↗</a>` : ""}`;
+      return `${q.label ? `<h4 class="dm-g" style="color:${COLORS[qi % 3]}">${esc(q.label)}</h4>` : ""}<ol class="dm-list">${rows}</ol>${gm ? `<a class="maplink" href="${gm}" target="_blank" rel="noopener">Open this route in Google Maps ↗</a>` : ""}`;
     }).join("");
-    box.querySelector(".dmcard").innerHTML = `<div class="dm-head"><div><span class="small muted">${esc(shortDay(day.date))}</span><h3 style="margin:0">${esc(alt ? (day.alt.label || "Plan B") : (day.title || ""))}</h3></div><button class="edbtn" data-dmclose aria-label="Close">✕</button></div>
-      ${day.alt && (day.alt.steps||[]).some(x => x.ll) ? `<div class="pf-row dm-switch"><button type="button" class="edbtn ${alt ? "" : "on"}" data-dmalt="0">Main plan</button><button type="button" class="edbtn ${alt ? "on" : ""}" data-dmalt="1">${esc(day.alt.label || "Plan B")}</button></div>` : ""}
-      ${svg}<p class="small muted" style="margin:4px 0 8px">Straight lines between stops, distances are rough road estimates (~). Real routes in Google Maps.</p>${rows}`;
-    box.querySelectorAll("[data-dmalt]").forEach(b => b.addEventListener("click", () => render(b.dataset.dmalt === "1")));
   };
-  render(!!useAlt);
+  render(false);
 }
 document.addEventListener("click", e => { const b = e.target.closest("[data-daymap]"); if(b){ e.preventDefault(); openDayMap(b.dataset.daymap); } });
 
