@@ -688,7 +688,7 @@ async function openDayMap(date){
       <div id="dmList"></div>`;
     box.querySelectorAll("[data-dmalt]").forEach(b => b.addEventListener("click", () => render(b.dataset.dmalt === "1")));
     map = L.map("dmMap", { zoomControl: true, attributionControl: true, scrollWheelZoom: false });
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors' }).addTo(map);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, referrerPolicy: "strict-origin-when-cross-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors' }).addTo(map);
     $("#dmMap").setAttribute("data-dark", isDark() ? "1" : "0");
     const all = seqs.flatMap(q => q.pts.map(p => p.ll));
     map.fitBounds(L.latLngBounds(all).pad(0.12), { maxZoom: 15 });
