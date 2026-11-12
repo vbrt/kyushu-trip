@@ -27,6 +27,7 @@ const mapsUrl = q => "https://www.google.com/maps/search/?api=1&query=" + encode
 const state = { db:null, assets:null, wx:null, costs:[], rates:{}, wishes:[], checks:{}, notes:{}, uploads:{}, packExtra:[], todoExtra:[], canWrite:true, names:{}, me:null, db:null, assets:null, user:null };
 
 function personName(key){ const p = PEOPLE.find(x => x.key === key); return p ? p.name : key; }
+const canPlanEdit = () => !!(state.canWrite && EMAILS[String(state.me || "").toLowerCase()] === "sara");
 function nameOf(id){ if(!id) return ""; const k = EMAILS[String(id).toLowerCase()]; return k ? personName(k) : (PLURAL ? "someone" : ""); }
 async function resolveNames(){}
 
@@ -130,7 +131,7 @@ function dayCard(day, big){
     <div class="datecol"><div class="d">${date.getDate()}</div><div class="m">${WDAYS[date.getDay()]} · ${MONTHS[date.getMonth()]}</div>${/^Day \d/.test(day.title || "") ? "" : `<div class="n">Day ${n}</div>`}</div>
     <div>
       ${(day.steps||[]).some(x => x && x.ll) || (day.alt && (day.alt.steps||[]).some(x => x.ll)) ? `<button type="button" class="edbtn" data-daymap="${esc(day.date)}">🗺 Map</button>` : ""}
-      ${!big && state.canWrite ? `<button type="button" class="edbtn" data-edit="${esc(day.date)}">${planEditing.has(day.date) ? "Done" : "✎ Edit"}</button>` : ""}
+      ${!big && canPlanEdit() ? `<button type="button" class="edbtn" data-edit="${esc(day.date)}">${planEditing.has(day.date) ? "Done" : "✎ Edit"}</button>` : ""}
       ${(day.tags||[]).length ? `<div class="chips" style="margin-bottom:4px">${day.tags.map(([l,c]) => `<span class="chip ${esc(c||"")}">${esc(l)}</span>`).join("")}</div>` : ""}
       <h3>${esc(day.title)}</h3>
       ${day.where ? `<div class="where">${esc(day.where)}</div>` : ""}
@@ -167,7 +168,7 @@ function planItems(day){
 }
 function planStepsHtml(day, big){
   const items = planItems(day), vis = items.filter(x => !x.hide), gone = items.filter(x => x.hide);
-  const editing = !big && planEditing.has(day.date);
+  const editing = !big && canPlanEdit() && planEditing.has(day.date);
   const opts = DAYS.map(d => `<option value="${esc(d.date)}"${d.date === day.date ? " selected" : ""}>${esc(shortDay(d.date))}</option>`).join("");
   const li = vis.map((x, j) => {
     let extra = "";
@@ -205,6 +206,7 @@ async function planSet(x, patch){
 }
 function bindPlanEdit(root){
   root.onclick = async e => {
+    if(!canPlanEdit()) return;
     const eb = e.target.closest("[data-edit]");
     if(eb){ const d = eb.dataset.edit; planEditing.has(d) ? planEditing.delete(d) : planEditing.add(d); renderPlan(); return; }
     const rb = e.target.closest("[data-restore]");
@@ -225,6 +227,7 @@ function bindPlanEdit(root){
     await planSet(x, { ord: oy }); await planSet(y, { ord: ox });
   };
   root.onchange = async e => {
+    if(!canPlanEdit()) return;
     const sel = e.target.closest('select[data-act="move"]'); if(!sel) return;
     const box = sel.closest(".sedit"), date = sel.closest("article.day").querySelector("[data-edit]").dataset.edit;
     const x = planItems({date}).filter(x => !x.hide)[+box.dataset.j]; if(!x || sel.value === date) return;
@@ -234,6 +237,7 @@ function bindPlanEdit(root){
   };
   root.onsubmit = async e => {
     const f = e.target.closest("form.addstep"); if(!f) return; e.preventDefault();
+    if(!canPlanEdit()) return;
     const v = n => (f.elements[n].value || "").trim(); if(!v("n")) return;
     const data = { date: f.dataset.add, n: v("n"), t: v("t"), k: v("k") || "act", q: v("q"), d: v("d"), at: Date.now() };
     if(data.t){ const vis = planItems({ date: data.date }).filter(x => !x.hide);
